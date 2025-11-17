@@ -1,0 +1,149 @@
+{
+  "pizzas": [
+    {
+      "id": "margherita",
+      "name": "Margherita",
+      "description": "Classic Italian pizza with fresh mozzarella, tomato sauce, and basil",
+      "category": "classic",
+      "imageUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80",
+      "basePrice": 12.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "basil"]
+    },
+    {
+      "id": "pepperoni",
+      "name": "Pepperoni",
+      "description": "America's favorite with generous pepperoni and mozzarella",
+      "category": "classic",
+      "imageUrl": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&q=80",
+      "basePrice": 14.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "pepperoni"]
+    },
+    {
+      "id": "bbq-chicken",
+      "name": "BBQ Chicken",
+      "description": "Grilled chicken, red onions, cilantro with tangy BBQ sauce",
+      "category": "specialty",
+      "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80",
+      "basePrice": 16.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "bbq-sauce", "chicken", "red-onion", "cilantro"]
+    },
+    {
+      "id": "veggie-supreme",
+      "name": "Veggie Supreme",
+      "description": "Fresh vegetables including bell peppers, mushrooms, onions, and olives",
+      "category": "vegetarian",
+      "imageUrl": "https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?w=800&q=80",
+      "basePrice": 15.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "bell-pepper", "mushroom", "onion", "olive"]
+    },
+    {
+      "id": "meat-lovers",
+      "name": "Meat Lovers",
+      "description": "Loaded with pepperoni, sausage, bacon, and ham",
+      "category": "premium",
+      "imageUrl": "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=800&q=80",
+      "basePrice": 18.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "pepperoni", "sausage", "bacon", "ham"]
+    },
+    {
+      "id": "hawaiian",
+      "name": "Hawaiian",
+      "description": "Sweet pineapple and savory ham on a classic cheese base",
+      "category": "specialty",
+      "imageUrl": "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800&q=80",
+      "basePrice": 15.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "ham", "pineapple"]
+    },
+    {
+      "id": "four-cheese",
+      "name": "Four Cheese",
+      "description": "Mozzarella, parmesan, gorgonzola, and provolone blend",
+      "category": "premium",
+      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80",
+      "basePrice": 17.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "parmesan", "gorgonzola", "provolone", "white-sauce"]
+    },
+    {
+      "id": "spicy-italian",
+      "name": "Spicy Italian",
+      "description": "Hot Italian sausage, jalapeños, and crushed red pepper",
+      "category": "specialty",
+      "imageUrl": "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=800&q=80",
+      "basePrice": 16.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": ["mozzarella", "tomato-sauce", "italian-sausage", "jalapeno", "red-pepper"]
+    }
+  ],
+  "toppings": [
+    { "id": "mozzarella", "name": "Mozzarella", "price": 0, "category": "cheese" },
+    { "id": "parmesan", "name": "Parmesan", "price": 1.5, "category": "cheese" },
+    { "id": "gorgonzola", "name": "Gorgonzola", "price": 2.0, "category": "cheese" },
+    { "id": "provolone", "name": "Provolone", "price": 1.5, "category": "cheese" },
+    { "id": "tomato-sauce", "name": "Tomato Sauce", "price": 0, "category": "sauce" },
+    { "id": "bbq-sauce", "name": "BBQ Sauce", "price": 0, "category": "sauce" },
+    { "id": "white-sauce", "name": "White Sauce", "price": 0, "category": "sauce" },
+    { "id": "pepperoni", "name": "Pepperoni", "price": 2.0, "category": "meat" },
+    { "id": "sausage", "name": "Sausage", "price": 2.0, "category": "meat" },
+    { "id": "italian-sausage", "name": "Italian Sausage", "price": 2.5, "category": "meat" },
+    { "id": "bacon", "name": "Bacon", "price": 2.5, "category": "meat" },
+    { "id": "ham", "name": "Ham", "price": 2.0, "category": "meat" },
+    { "id": "chicken", "name": "Grilled Chicken", "price": 3.0, "category": "meat" },
+    { "id": "mushroom", "name": "Mushrooms", "price": 1.5, "category": "vegetable" },
+    { "id": "bell-pepper", "name": "Bell Peppers", "price": 1.5, "category": "vegetable" },
+    { "id": "onion", "name": "Onions", "price": 1.0, "category": "vegetable" },
+    { "id": "red-onion", "name": "Red Onions", "price": 1.0, "category": "vegetable" },
+    { "id": "olive", "name": "Black Olives", "price": 1.5, "category": "vegetable" },
+    { "id": "jalapeno", "name": "Jalapeños", "price": 1.5, "category": "vegetable" },
+    { "id": "pineapple", "name": "Pineapple", "price": 1.5, "category": "vegetable" },
+    { "id": "basil", "name": "Fresh Basil", "price": 1.0, "category": "vegetable" },
+    { "id": "cilantro", "name": "Cilantro", "price": 1.0, "category": "vegetable" },
+    { "id": "red-pepper", "name": "Crushed Red Pepper", "price": 0.5, "category": "vegetable" }
+  ]
+}
