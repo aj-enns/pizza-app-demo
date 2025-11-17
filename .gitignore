@@ -20,14 +20,20 @@
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
+.env
 .env*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # vercel
 .vercel
@@ -36,6 +42,41 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# jest
+/coverage
+/.jest-cache
+/jest-cache
+
+# IDEs and editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Docker
+docker-compose.override.yml
+.docker/
+
 # data files
 data/orders/*.json
 !data/orders/.gitkeep
+
+# performance monitoring
+performance-logs/
+*.perf
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
