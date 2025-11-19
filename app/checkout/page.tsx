@@ -70,7 +70,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8 text-gray-900">Checkout</h1>
+      <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">Checkout</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -78,7 +78,7 @@ export default function CheckoutPage() {
             <h2 className="text-2xl font-bold mb-6">Delivery Information</h2>
             
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
                 {error}
               </div>
             )}
@@ -86,7 +86,7 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Full Name *
                   </label>
                   <input
@@ -102,7 +102,7 @@ export default function CheckoutPage() {
                 </div>
                 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Phone Number *
                   </label>
                   <input
@@ -119,7 +119,7 @@ export default function CheckoutPage() {
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Email Address *
                 </label>
                 <input
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
               </div>
               
               <div>
-                <label htmlFor="address" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="address" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Street Address *
                 </label>
                 <input
@@ -152,7 +152,7 @@ export default function CheckoutPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="city" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label htmlFor="city" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     City *
                   </label>
                   <input
@@ -168,7 +168,7 @@ export default function CheckoutPage() {
                 </div>
                 
                 <div>
-                  <label htmlFor="zipCode" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label htmlFor="zipCode" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     ZIP Code *
                   </label>
                   <input
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
               </div>
               
               <div>
-                <label htmlFor="deliveryInstructions" className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="deliveryInstructions" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Delivery Instructions (Optional)
                 </label>
                 <textarea

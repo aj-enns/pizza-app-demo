@@ -1,10 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import Header from '../Header';
 import { CartProvider } from '@/contexts/CartContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
-// Helper to render with CartProvider
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+// Helper to render with CartProvider and ThemeProvider
 const renderWithCart = (ui: React.ReactElement) => {
-  return render(<CartProvider>{ui}</CartProvider>);
+  return render(
+    <ThemeProvider>
+      <CartProvider>{ui}</CartProvider>
+    </ThemeProvider>
+  );
 };
 
 describe('Header', () => {

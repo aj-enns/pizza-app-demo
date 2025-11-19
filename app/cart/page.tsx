@@ -13,11 +13,11 @@ export default function CartPage() {
     return (
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-md mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-32 h-32 bg-gray-100 rounded-full mb-6">
-            <ShoppingBag size={64} className="text-gray-400" />
+          <div className="inline-flex items-center justify-center w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-full mb-6">
+            <ShoppingBag size={64} className="text-gray-400 dark:text-gray-600" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">Your Cart is Empty</h1>
-          <p className="text-xl text-gray-600 mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">Your Cart is Empty</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
             Add some delicious pizzas to get started!
           </p>
           <Link href="/menu" className="btn-primary inline-flex items-center gap-2">
@@ -31,7 +31,7 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8 text-gray-900">Your Cart ({itemCount} items)</h1>
+      <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">Your Cart ({itemCount} items)</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
