@@ -21,7 +21,6 @@ export default function Header() {
             <Link href="/menu" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
               Menu
             </Link>
-            <ThemeToggle />
             <Link href="/cart" className="relative flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
               <ShoppingCart size={24} />
               {itemCount > 0 && (
@@ -30,6 +29,7 @@ export default function Header() {
                 </span>
               )}
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </nav>
