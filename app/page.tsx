@@ -30,35 +30,35 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center animate-slide-up">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 rounded-full mb-4">
-                <Clock className="text-primary-600" size={40} />
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-full mb-4">
+                <Clock className="text-primary-600 dark:text-primary-400" size={40} />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-2 dark:text-white">Fast Delivery</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Your pizza arrives hot and fresh in 30-45 minutes, guaranteed!
               </p>
             </div>
             
             <div className="text-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 rounded-full mb-4">
-                <Star className="text-primary-600" size={40} />
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-full mb-4">
+                <Star className="text-primary-600 dark:text-primary-400" size={40} />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Quality Ingredients</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-2 dark:text-white">Quality Ingredients</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 We use only the finest ingredients for authentic Italian taste.
               </p>
             </div>
             
             <div className="text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 rounded-full mb-4">
-                <Truck className="text-primary-600" size={40} />
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-full mb-4">
+                <Truck className="text-primary-600 dark:text-primary-400" size={40} />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Free Delivery</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold mb-2 dark:text-white">Free Delivery</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Free delivery on all orders. No minimum purchase required!
               </p>
             </div>
@@ -67,11 +67,11 @@ export default function HomePage() {
       </section>
 
       {/* Featured Pizzas Preview */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Popular Pizzas</h2>
-            <p className="text-xl text-gray-600">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 dark:text-white">Popular Pizzas</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Try our customer favorites
             </p>
           </div>
@@ -105,8 +105,8 @@ export default function HomePage() {
                   />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-2xl font-bold mb-2">{pizza.name}</h3>
-                  <p className="text-gray-600">{pizza.description}</p>
+                  <h3 className="text-2xl font-bold mb-2 dark:text-white">{pizza.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-300">{pizza.description}</p>
                 </div>
               </div>
             ))}
