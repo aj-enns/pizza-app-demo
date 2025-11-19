@@ -23,12 +23,12 @@ export default function CartItem({ item }: CartItemProps) {
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="font-bold text-lg text-gray-900">{item.pizzaName}</h3>
-              <p className="text-sm text-gray-600">{SIZE_LABELS[item.size]}</p>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.pizzaName}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{SIZE_LABELS[item.size]}</p>
             </div>
             <button
               onClick={() => removeItem(item.id)}
-              className="text-gray-400 hover:text-red-600 transition-colors"
+              className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-500 transition-colors"
               aria-label="Remove item"
             >
               <X size={20} />
@@ -37,7 +37,7 @@ export default function CartItem({ item }: CartItemProps) {
           
           {extraToppings.length > 0 && (
             <div className="mb-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
               </p>
             </div>
@@ -47,7 +47,7 @@ export default function CartItem({ item }: CartItemProps) {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                className="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-primary-600 hover:text-primary-600 transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-primary-600 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-500 transition-colors flex items-center justify-center"
                 aria-label="Decrease quantity"
               >
                 <Minus size={16} />
@@ -55,7 +55,7 @@ export default function CartItem({ item }: CartItemProps) {
               <span className="font-semibold text-lg w-8 text-center">{item.quantity}</span>
               <button
                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                className="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-primary-600 hover:text-primary-600 transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-primary-600 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-500 transition-colors flex items-center justify-center"
                 aria-label="Increase quantity"
               >
                 <Plus size={16} />
@@ -63,10 +63,10 @@ export default function CartItem({ item }: CartItemProps) {
             </div>
             
             <div className="text-right">
-              <p className="text-lg font-bold text-primary-600">
+              <p className="text-lg font-bold text-primary-600 dark:text-primary-500">
                 {formatPrice(item.totalPrice * item.quantity)}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatPrice(item.totalPrice)} each
               </p>
             </div>
