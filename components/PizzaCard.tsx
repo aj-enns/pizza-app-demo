@@ -49,11 +49,11 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
       </div>
       
       <div className="p-6">
-        <h3 className="text-2xl font-bold mb-2 text-gray-900">{pizza.name}</h3>
-        <p className="text-gray-600 mb-4 line-clamp-2">{pizza.description}</p>
+        <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{pizza.name}</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{pizza.description}</p>
         
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Size:
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -63,8 +63,8 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
                 onClick={() => setSelectedSize(size)}
                 className={`px-3 py-2 rounded-lg border-2 transition-all ${
                   selectedSize === size
-                    ? 'border-primary-600 bg-primary-50 text-primary-700 font-semibold'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                 }`}
               >
                 {SIZE_LABELS[size].split(' ')[0]}
@@ -74,7 +74,7 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
         </div>
         
         <div className="flex items-center justify-between mb-4">
-          <span className="text-3xl font-bold text-primary-600">
+          <span className="text-3xl font-bold text-primary-600 dark:text-primary-500">
             {formatPrice(currentPrice)}
           </span>
         </div>
