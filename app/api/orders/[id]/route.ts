@@ -9,13 +9,13 @@ const DATA_DIR = path.join(process.cwd(), 'data', 'orders');
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return trackPerformance(
     'API:GET:/api/orders/[id]',
     async () => {
       try {
-        const { id } = params;
+        const { id } = await params;
         const orderFilePath = path.join(DATA_DIR, `${id}.json`);
 
         if (!existsSync(orderFilePath)) {
@@ -52,6 +52,6 @@ export async function GET(
       }
     },
     PERFORMANCE_THRESHOLDS.API_REQUEST,
-    { endpoint: `/api/orders/${params.id}`, orderId: params.id }
+    { endpoint: `/api/orders/[id]` }
   );
 }
