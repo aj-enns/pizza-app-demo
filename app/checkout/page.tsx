@@ -1,17 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import CartSummary from '@/components/CartSummary';
 import { CustomerInfo } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserPlus, LogIn } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCart();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   
   const [formData, setFormData] = useState<CustomerInfo>({
     name: '',
@@ -22,6 +26,25 @@ export default function CheckoutPage() {
     zipCode: '',
     deliveryInstructions: '',
   });
+
+  // Pre-fill form if user is logged in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        city: user.city,
+        zipCode: user.zipCode,
+        deliveryInstructions: '',
+      });
+      setShowLoginPrompt(false);
+    } else if (!isLoading && !isAuthenticated) {
+      // Show login prompt if not logged in
+      setShowLoginPrompt(true);
+    }
+  }, [isAuthenticated, user, isLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -36,15 +59,22 @@ export default function CheckoutPage() {
     setError('');
 
     try {
+      const orderData: any = {
+        customerInfo: formData,
+        items,
+      };
+
+      // Include userId if logged in
+      if (isAuthenticated && user) {
+        orderData.userId = user.id;
+      }
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          customerInfo: formData,
-          items,
-        }),
+        body: JSON.stringify(orderData),
       });
 
       const data = await response.json();
@@ -63,6 +93,10 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleContinueAsGuest = () => {
+    setShowLoginPrompt(false);
+  };
+
   if (items.length === 0) {
     router.push('/cart');
     return null;
@@ -71,6 +105,39 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">Checkout</h1>
+      
+      {showLoginPrompt && !isLoading && (
+        <div className="card p-8 mb-8 border-2 border-primary-200 dark:border-primary-800">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            Sign in to save time!
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Create an account or sign in to save your delivery address and view your order history.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link
+              href={`/login?redirect=/checkout`}
+              className="btn-primary flex items-center justify-center gap-2 flex-1"
+            >
+              <LogIn size={20} />
+              Sign In
+            </Link>
+            <Link
+              href={`/register?redirect=/checkout`}
+              className="btn-secondary flex items-center justify-center gap-2 flex-1"
+            >
+              <UserPlus size={20} />
+              Create Account
+            </Link>
+            <button
+              onClick={handleContinueAsGuest}
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold px-4 py-2"
+            >
+              Continue as Guest
+            </button>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
