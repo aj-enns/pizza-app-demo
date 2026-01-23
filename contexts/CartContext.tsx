@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem, PizzaSize } from '@/lib/types';
-import { calculateCartTotals, calculateItemPrice, getPizzaById } from '@/lib/utils';
+import { CartItem, PizzaSize, ToppingWithPlacement } from '@/lib/types';
+import { calculateCartTotals, calculateItemPrice, calculateCustomItemPrice, getPizzaById } from '@/lib/utils';
 
 interface CartState {
   items: CartItem[];
@@ -15,6 +15,17 @@ interface CartState {
 
 type CartAction =
   | { type: 'ADD_ITEM'; payload: { pizzaId: string; size: PizzaSize; selectedToppings: string[] } }
+  | { 
+      type: 'ADD_CUSTOM_ITEM'; 
+      payload: { 
+        pizzaId: string; 
+        pizzaName: string;
+        size: PizzaSize; 
+        customToppings: ToppingWithPlacement[];
+        customCrust?: string;
+        customSauce?: string;
+      } 
+    }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
@@ -22,6 +33,14 @@ type CartAction =
 
 interface CartContextType extends CartState {
   addItem: (pizzaId: string, size: PizzaSize, selectedToppings: string[]) => void;
+  addCustomItem: (
+    pizzaId: string,
+    pizzaName: string,
+    size: PizzaSize,
+    customToppings: ToppingWithPlacement[],
+    customCrust?: string,
+    customSauce?: string
+  ) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -82,6 +101,52 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         };
         newItems = [...state.items, newItem];
       }
+      
+      const totals = calculateCartTotals(newItems);
+      const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
+      
+      return {
+        items: newItems,
+        ...totals,
+        itemCount,
+      };
+    }
+    
+    case 'ADD_CUSTOM_ITEM': {
+      const { pizzaId, pizzaName, size, customToppings, customCrust, customSauce } = action.payload;
+      const pizza = getPizzaById(pizzaId);
+      
+      if (!pizza) return state;
+      
+      const sizeConfig = pizza.sizes.find(s => s.size === size);
+      if (!sizeConfig) return state;
+      
+      const basePrice = pizza.basePrice;
+      const totalPrice = calculateCustomItemPrice(
+        basePrice,
+        size,
+        sizeConfig.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        customCrust
+      );
+      
+      // Custom items are always added as new items (no merging)
+      const newItem: CartItem = {
+        id: `${pizzaId}-custom-${Date.now()}`,
+        pizzaId,
+        pizzaName,
+        size,
+        basePrice,
+        selectedToppings: customToppings.map(t => t.toppingId),
+        quantity: 1,
+        totalPrice,
+        customToppings,
+        customCrust,
+        customSauce,
+        isCustom: true,
+      };
+      const newItems = [...state.items, newItem];
       
       const totals = calculateCartTotals(newItems);
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -188,6 +253,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ADD_ITEM', payload: { pizzaId, size, selectedToppings } });
   };
   
+  const addCustomItem = (
+    pizzaId: string,
+    pizzaName: string,
+    size: PizzaSize,
+    customToppings: ToppingWithPlacement[],
+    customCrust?: string,
+    customSauce?: string
+  ) => {
+    dispatch({ 
+      type: 'ADD_CUSTOM_ITEM', 
+      payload: { pizzaId, pizzaName, size, customToppings, customCrust, customSauce } 
+    });
+  };
+  
   const removeItem = (id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: id });
   };
@@ -205,6 +284,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         addItem,
+        addCustomItem,
         removeItem,
         updateQuantity,
         clearCart,

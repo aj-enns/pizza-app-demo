@@ -1,7 +1,7 @@
 'use client';
 
 import { CartItem as CartItemType } from '@/lib/types';
-import { formatPrice, SIZE_LABELS, getToppingById } from '@/lib/utils';
+import { formatPrice, SIZE_LABELS, getToppingById, getCrustById } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, X } from 'lucide-react';
 
@@ -12,10 +12,47 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  const extraToppings = item.selectedToppings.filter(toppingId => {
-    const topping = getToppingById(toppingId);
-    return topping && topping.price > 0;
-  });
+  // For custom pizzas, show all toppings with placement
+  const renderCustomToppings = () => {
+    if (!item.customToppings || item.customToppings.length === 0) return null;
+    
+    const fullToppings = item.customToppings
+      .filter(t => t.placement === 'full')
+      .map(t => getToppingById(t.toppingId)?.name)
+      .filter(Boolean);
+    
+    const leftToppings = item.customToppings
+      .filter(t => t.placement === 'left')
+      .map(t => getToppingById(t.toppingId)?.name)
+      .filter(Boolean);
+    
+    const rightToppings = item.customToppings
+      .filter(t => t.placement === 'right')
+      .map(t => getToppingById(t.toppingId)?.name)
+      .filter(Boolean);
+    
+    return (
+      <div className="mb-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+        {fullToppings.length > 0 && (
+          <p>Whole: {fullToppings.join(', ')}</p>
+        )}
+        {leftToppings.length > 0 && (
+          <p>Left Half: {leftToppings.join(', ')}</p>
+        )}
+        {rightToppings.length > 0 && (
+          <p>Right Half: {rightToppings.join(', ')}</p>
+        )}
+      </div>
+    );
+  };
+
+  // For regular pizzas, show extra toppings
+  const extraToppings = !item.isCustom
+    ? item.selectedToppings.filter(toppingId => {
+        const topping = getToppingById(toppingId);
+        return topping && topping.price > 0;
+      })
+    : [];
 
   return (
     <div className="card p-4 mb-4 animate-slide-up">
@@ -23,8 +60,20 @@ export default function CartItem({ item }: CartItemProps) {
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.pizzaName}</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                {item.pizzaName}
+                {item.isCustom && (
+                  <span className="ml-2 text-xs font-normal bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded">
+                    Custom
+                  </span>
+                )}
+              </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{SIZE_LABELS[item.size]}</p>
+              {item.customCrust && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {getCrustById(item.customCrust)?.name}
+                </p>
+              )}
             </div>
             <button
               onClick={() => removeItem(item.id)}
@@ -35,12 +84,14 @@ export default function CartItem({ item }: CartItemProps) {
             </button>
           </div>
           
-          {extraToppings.length > 0 && (
-            <div className="mb-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
-              </p>
-            </div>
+          {item.isCustom ? renderCustomToppings() : (
+            extraToppings.length > 0 && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
+                </p>
+              </div>
+            )
           )}
           
           <div className="flex items-center justify-between">
