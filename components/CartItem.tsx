@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CartItem as CartItemType } from '@/lib/types';
 import { formatPrice, SIZE_LABELS, getToppingById, getCrustById } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
@@ -12,35 +13,41 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  // For custom pizzas, show all toppings with placement
-  const renderCustomToppings = () => {
+  // Memoized topping groups - single pass through array
+  const toppingGroups = useMemo(() => {
     if (!item.customToppings || item.customToppings.length === 0) return null;
     
-    const fullToppings = item.customToppings
-      .filter(t => t.placement === 'full')
-      .map(t => getToppingById(t.toppingId)?.name)
-      .filter(Boolean);
+    const groups: Record<'full' | 'left' | 'right', string[]> = {
+      full: [],
+      left: [],
+      right: [],
+    };
     
-    const leftToppings = item.customToppings
-      .filter(t => t.placement === 'left')
-      .map(t => getToppingById(t.toppingId)?.name)
-      .filter(Boolean);
+    // Single iteration through toppings
+    for (const topping of item.customToppings) {
+      const name = getToppingById(topping.toppingId)?.name;
+      if (name) {
+        groups[topping.placement].push(name);
+      }
+    }
     
-    const rightToppings = item.customToppings
-      .filter(t => t.placement === 'right')
-      .map(t => getToppingById(t.toppingId)?.name)
-      .filter(Boolean);
+    return groups;
+  }, [item.customToppings]);
+
+  // Render custom toppings using memoized groups
+  const renderCustomToppings = () => {
+    if (!toppingGroups) return null;
     
     return (
       <div className="mb-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-        {fullToppings.length > 0 && (
-          <p>Whole: {fullToppings.join(', ')}</p>
+        {toppingGroups.full.length > 0 && (
+          <p>Whole: {toppingGroups.full.join(', ')}</p>
         )}
-        {leftToppings.length > 0 && (
-          <p>Left Half: {leftToppings.join(', ')}</p>
+        {toppingGroups.left.length > 0 && (
+          <p>Left Half: {toppingGroups.left.join(', ')}</p>
         )}
-        {rightToppings.length > 0 && (
-          <p>Right Half: {rightToppings.join(', ')}</p>
+        {toppingGroups.right.length > 0 && (
+          <p>Right Half: {toppingGroups.right.join(', ')}</p>
         )}
       </div>
     );

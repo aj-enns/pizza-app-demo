@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Pizza, PizzaSize } from '@/lib/types';
@@ -18,10 +18,17 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
   const [showCustomize, setShowCustomize] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
-  const sizeConfig = pizza.sizes.find(s => s.size === selectedSize);
-  const currentPrice = sizeConfig 
-    ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, pizza.defaultToppings, pizza.defaultToppings)
-    : pizza.basePrice;
+  const sizeConfig = useMemo(
+    () => pizza.sizes.find(s => s.size === selectedSize),
+    [pizza.sizes, selectedSize]
+  );
+  
+  const currentPrice = useMemo(
+    () => sizeConfig 
+      ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, pizza.defaultToppings, pizza.defaultToppings)
+      : pizza.basePrice,
+    [pizza.basePrice, selectedSize, sizeConfig, pizza.defaultToppings]
+  );
 
   const handleAddToCart = () => {
     setIsAdding(true);
