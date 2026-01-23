@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Pizza, PizzaSize } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
 import { SIZE_LABELS, formatPrice, calculateItemPrice } from '@/lib/utils';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, Settings } from 'lucide-react';
 
 interface PizzaCardProps {
   pizza: Pizza;
@@ -17,10 +18,17 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
   const [showCustomize, setShowCustomize] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
-  const sizeConfig = pizza.sizes.find(s => s.size === selectedSize);
-  const currentPrice = sizeConfig 
-    ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, pizza.defaultToppings, pizza.defaultToppings)
-    : pizza.basePrice;
+  const sizeConfig = useMemo(
+    () => pizza.sizes.find(s => s.size === selectedSize),
+    [pizza.sizes, selectedSize]
+  );
+  
+  const currentPrice = useMemo(
+    () => sizeConfig 
+      ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, pizza.defaultToppings, pizza.defaultToppings)
+      : pizza.basePrice,
+    [pizza.basePrice, selectedSize, sizeConfig, pizza.defaultToppings]
+  );
 
   const handleAddToCart = () => {
     setIsAdding(true);
@@ -79,23 +87,33 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
           </span>
         </div>
         
-        <button
-          onClick={handleAddToCart}
-          disabled={isAdding}
-          className="btn-primary w-full flex items-center justify-center gap-2"
-        >
-          {isAdding ? (
-            <>
-              <Check size={20} />
-              Added!
-            </>
-          ) : (
-            <>
-              <Plus size={20} />
-              Add to Cart
-            </>
-          )}
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={isAdding}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            {isAdding ? (
+              <>
+                <Check size={20} />
+                Added!
+              </>
+            ) : (
+              <>
+                <Plus size={20} />
+                Add to Cart
+              </>
+            )}
+          </button>
+          
+          <Link
+            href={`/customize?pizzaId=${pizza.id}`}
+            className="btn-secondary w-full flex items-center justify-center gap-2"
+          >
+            <Settings size={20} />
+            Customize
+          </Link>
+        </div>
       </div>
     </div>
   );
