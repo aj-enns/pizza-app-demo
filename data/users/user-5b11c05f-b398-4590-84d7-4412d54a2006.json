@@ -1,0 +1,11 @@
+{
+  "id": "user-5b11c05f-b398-4590-84d7-4412d54a2006",
+  "email": "john@example.com",
+  "password": "n7qt9z",
+  "name": "John Doe",
+  "phone": "(555) 123-4567",
+  "address": "123 Main Street",
+  "city": "New York",
+  "zipCode": "10001",
+  "createdAt": "2026-01-23T13:58:30.580Z"
+}

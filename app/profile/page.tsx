@@ -41,6 +41,7 @@ export default function ProfilePage() {
       });
       loadOrders();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadOrders = async () => {
