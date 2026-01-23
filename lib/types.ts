@@ -1,11 +1,23 @@
 // Pizza and Menu Types
 export type PizzaSize = 'small' | 'medium' | 'large' | 'xlarge';
+export type ToppingPlacement = 'full' | 'left' | 'right';
 
 export interface Topping {
   id: string;
   name: string;
   price: number;
   category: 'meat' | 'vegetable' | 'cheese' | 'sauce';
+}
+
+export interface Crust {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface ToppingWithPlacement {
+  toppingId: string;
+  placement: ToppingPlacement;
 }
 
 export interface Pizza {
@@ -38,6 +50,11 @@ export interface CartItem {
   selectedToppings: string[];
   quantity: number;
   totalPrice: number;
+  // Customization fields
+  customToppings?: ToppingWithPlacement[];
+  customCrust?: string;
+  customSauce?: string;
+  isCustom?: boolean;
 }
 
 export interface Cart {
