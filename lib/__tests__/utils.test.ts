@@ -3,13 +3,16 @@ import {
   getPizzaById,
   getToppings,
   getToppingById,
+  getCrusts,
+  getCrustById,
   calculateItemPrice,
+  calculateCustomItemPrice,
   calculateCartTotals,
   generateOrderNumber,
   formatPrice,
   SIZE_LABELS,
 } from '../utils';
-import { CartItem, PizzaSize } from '../types';
+import { CartItem, PizzaSize, ToppingWithPlacement } from '../types';
 
 describe('utils', () => {
   describe('getPizzas', () => {
@@ -261,6 +264,166 @@ describe('utils', () => {
 
     it('should handle negative numbers', () => {
       expect(formatPrice(-10.50)).toBe('$-10.50');
+    });
+  });
+
+  describe('getCrusts', () => {
+    it('should return an array of crusts', () => {
+      const crusts = getCrusts();
+      expect(Array.isArray(crusts)).toBe(true);
+      expect(crusts.length).toBeGreaterThan(0);
+    });
+
+    it('should return crusts with correct properties', () => {
+      const crusts = getCrusts();
+      const crust = crusts[0];
+      expect(crust).toHaveProperty('id');
+      expect(crust).toHaveProperty('name');
+      expect(crust).toHaveProperty('price');
+    });
+
+    it('should include regular crust with zero price', () => {
+      const crusts = getCrusts();
+      const regularCrust = crusts.find(c => c.id === 'regular');
+      expect(regularCrust).toBeDefined();
+      expect(regularCrust?.price).toBe(0);
+    });
+  });
+
+  describe('getCrustById', () => {
+    it('should return a crust when valid ID is provided', () => {
+      const crust = getCrustById('regular');
+      expect(crust).toBeDefined();
+      expect(crust?.id).toBe('regular');
+    });
+
+    it('should return undefined when invalid ID is provided', () => {
+      const crust = getCrustById('non-existent-crust');
+      expect(crust).toBeUndefined();
+    });
+  });
+
+  describe('calculateCustomItemPrice', () => {
+    const pizza = getPizzas()[0];
+    const sizeConfig = pizza.sizes.find(s => s.size === 'medium');
+
+    it('should calculate price for custom pizza with full toppings', () => {
+      const customToppings: ToppingWithPlacement[] = [
+        { toppingId: 'pepperoni', placement: 'full' },
+        { toppingId: 'mushroom', placement: 'full' },
+      ];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'regular'
+      );
+      
+      // Base price * multiplier + pepperoni (2.0) + mushroom (1.5)
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier + 2.0 + 1.5;
+      expect(price).toBe(expectedPrice);
+    });
+
+    it('should calculate price for half toppings correctly', () => {
+      const customToppings: ToppingWithPlacement[] = [
+        { toppingId: 'pepperoni', placement: 'left' },
+        { toppingId: 'mushroom', placement: 'right' },
+      ];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'regular'
+      );
+      
+      // Base price * multiplier + (pepperoni/2) (1.0) + (mushroom/2) (0.75)
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier + 1.0 + 0.75;
+      expect(price).toBe(expectedPrice);
+    });
+
+    it('should treat two halves of same topping as one full topping', () => {
+      const customToppings: ToppingWithPlacement[] = [
+        { toppingId: 'pepperoni', placement: 'left' },
+        { toppingId: 'pepperoni', placement: 'right' },
+      ];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'regular'
+      );
+      
+      // Base price * multiplier + pepperoni full price (2.0)
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier + 2.0;
+      expect(price).toBe(expectedPrice);
+    });
+
+    it('should add custom crust price', () => {
+      const customToppings: ToppingWithPlacement[] = [];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'stuffed' // Stuffed crust costs 3.0
+      );
+      
+      // Base price * multiplier + stuffed crust (3.0)
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier + 3.0;
+      expect(price).toBe(expectedPrice);
+    });
+
+    it('should not charge for default toppings', () => {
+      // Add default toppings back with custom placement
+      const defaultTopping = pizza.defaultToppings[0];
+      const customToppings: ToppingWithPlacement[] = [
+        { toppingId: defaultTopping, placement: 'full' },
+      ];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'regular'
+      );
+      
+      // Should only charge base price, not for default topping
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier;
+      expect(price).toBe(expectedPrice);
+    });
+
+    it('should handle mixed full and half toppings', () => {
+      const customToppings: ToppingWithPlacement[] = [
+        { toppingId: 'pepperoni', placement: 'full' },
+        { toppingId: 'mushroom', placement: 'left' },
+        { toppingId: 'onion', placement: 'right' },
+      ];
+      
+      const price = calculateCustomItemPrice(
+        pizza.basePrice,
+        'medium',
+        sizeConfig!.priceMultiplier,
+        customToppings,
+        pizza.defaultToppings,
+        'regular'
+      );
+      
+      // Base price + pepperoni (2.0) + mushroom/2 (0.75) + onion/2 (0.5)
+      const expectedPrice = pizza.basePrice * sizeConfig!.priceMultiplier + 2.0 + 0.75 + 0.5;
+      expect(price).toBe(expectedPrice);
     });
   });
 });
