@@ -2,39 +2,49 @@ import { Pizza, Topping, PizzaSize, CartItem, Crust, ToppingWithPlacement } from
 import menuData from './data/menu.json';
 import { trackPerformanceSync, PERFORMANCE_THRESHOLDS } from './performance';
 
+// Menu data structure interface
+interface MenuData {
+  pizzas: Pizza[];
+  toppings: Topping[];
+  crusts: Crust[];
+}
+
+// Type-safe menu data
+const typedMenuData = menuData as unknown as MenuData;
+
 // Get all pizzas
 export function getPizzas(): Pizza[] {
   return trackPerformanceSync(
     'getPizzas',
-    () => menuData.pizzas as Pizza[],
+    () => typedMenuData.pizzas,
     PERFORMANCE_THRESHOLDS.DATABASE_QUERY,
-    { operation: 'readMenuData', pizzaCount: menuData.pizzas.length }
+    { operation: 'readMenuData', pizzaCount: typedMenuData.pizzas.length }
   );
 }
 
 // Get pizza by ID
 export function getPizzaById(id: string): Pizza | undefined {
-  return menuData.pizzas.find(pizza => pizza.id === id) as Pizza | undefined;
+  return typedMenuData.pizzas.find(pizza => pizza.id === id);
 }
 
 // Get all toppings
 export function getToppings(): Topping[] {
-  return menuData.toppings as Topping[];
+  return typedMenuData.toppings;
 }
 
 // Get topping by ID
 export function getToppingById(id: string): Topping | undefined {
-  return menuData.toppings.find(topping => topping.id === id) as Topping | undefined;
+  return typedMenuData.toppings.find(topping => topping.id === id);
 }
 
 // Get all crusts
 export function getCrusts(): Crust[] {
-  return (menuData as any).crusts as Crust[];
+  return typedMenuData.crusts;
 }
 
 // Get crust by ID
 export function getCrustById(id: string): Crust | undefined {
-  return (menuData as any).crusts?.find((crust: any) => crust.id === id) as Crust | undefined;
+  return typedMenuData.crusts.find(crust => crust.id === id);
 }
 
 // Size labels for display
