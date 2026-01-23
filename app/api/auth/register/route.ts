@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, readdir, readFile } from 'fs/promises';
+import { writeFile, readdir, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -94,6 +94,12 @@ export async function POST(request: NextRequest) {
 
     // Save user to file
     const userFilePath = path.join(USERS_DIR, `${userId}.json`);
+    
+    // Ensure users directory exists
+    if (!existsSync(USERS_DIR)) {
+      await mkdir(USERS_DIR, { recursive: true });
+    }
+    
     await writeFile(userFilePath, JSON.stringify(user, null, 2), { encoding: 'utf-8' });
 
     // Return user profile (without password)
