@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, readdir } from 'fs/promises';
+import { writeFile, readdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -64,8 +64,7 @@ export async function POST(request: NextRequest) {
       for (const file of files) {
         if (file.endsWith('.json')) {
           const userPath = path.join(USERS_DIR, file);
-          const fs = require('fs');
-          const userData = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
+          const userData = JSON.parse(await readFile(userPath, 'utf-8'));
           if (userData.email.toLowerCase() === email.toLowerCase()) {
             return NextResponse.json(
               {

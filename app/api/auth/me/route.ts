@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readdir } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { User, UserProfile } from '@/lib/types';
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const fs = require('fs');
-    const user: User = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
+    const userData = await readFile(userPath, 'utf-8');
+    const user: User = JSON.parse(userData);
 
     // Return user profile (without password)
     const userProfile: UserProfile = {

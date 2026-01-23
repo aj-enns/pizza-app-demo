@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { User, UserProfile } from '@/lib/types';
@@ -36,8 +36,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Read current user data
-    const fs = require('fs');
-    const user: User = JSON.parse(fs.readFileSync(userPath, 'utf-8'));
+    const userData = await readFile(userPath, 'utf-8');
+    const user: User = JSON.parse(userData);
 
     // Update only provided fields
     if (name !== undefined) user.name = name.trim();
