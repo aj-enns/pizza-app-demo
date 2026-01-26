@@ -11,6 +11,21 @@ export const metadata: Metadata = {
   description: "Order delicious pizzas online with fast delivery. Browse our menu of classic, specialty, and premium pizzas.",
 };
 
+// Inline script to set theme before React hydrates (prevents flash)
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('pizza-theme');
+      if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: {
@@ -18,6 +33,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <CartProvider>
           <ClientLayout>
