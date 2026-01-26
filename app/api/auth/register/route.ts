@@ -3,21 +3,11 @@ import { writeFile, readdir, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
+import bcrypt from 'bcrypt';
 import { User, UserProfile, RegisterCredentials } from '@/lib/types';
 
 const USERS_DIR = path.join(process.cwd(), 'data', 'users');
-
-// Simple hash function for demo purposes (NOT for production!)
-// In production, use bcrypt or similar
-function simpleHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36);
-}
+const SALT_ROUNDS = 10;
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,12 +68,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create user
+    // Create user with hashed password
     const userId = `user-${randomUUID()}`;
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    
     const user: User = {
       id: userId,
       email: email.toLowerCase().trim(),
-      password: simpleHash(password), // Hash password
+      password: hashedPassword,
       name: name.trim(),
       phone: phone.trim(),
       address: address.trim(),

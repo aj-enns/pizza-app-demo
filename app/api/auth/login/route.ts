@@ -2,20 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import bcrypt from 'bcrypt';
 import { User, UserProfile, LoginCredentials } from '@/lib/types';
 
 const USERS_DIR = path.join(process.cwd(), 'data', 'users');
-
-// Simple hash function (must match register)
-function simpleHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36);
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +35,6 @@ export async function POST(request: NextRequest) {
     }
 
     const files = await readdir(USERS_DIR);
-    const hashedPassword = simpleHash(password);
 
     for (const file of files) {
       if (file.endsWith('.json')) {
@@ -54,8 +43,9 @@ export async function POST(request: NextRequest) {
         const user: User = JSON.parse(userData);
         
         if (user.email.toLowerCase() === email.toLowerCase().trim()) {
-          // Check password
-          if (user.password === hashedPassword) {
+          // Verify password using bcrypt
+          const isPasswordValid = await bcrypt.compare(password, user.password);
+          if (isPasswordValid) {
             // Return user profile (without password)
             const userProfile: UserProfile = {
               id: user.id,
