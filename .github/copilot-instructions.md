@@ -11,6 +11,8 @@ This is a modern, full-stack pizza ordering website built with Next.js 15 (App R
 - **Styling**: Tailwind CSS with custom theme and animations
 - **State Management**: React Context API (no external state libraries)
 - **Icons**: Lucide React
+- **Unit Testing**: Jest 30 with React Testing Library
+- **E2E Testing**: Playwright (Chromium, 5 parallel workers)
 - **Deployment**: Docker with multi-stage builds
 
 ### Architecture Pattern
@@ -55,6 +57,15 @@ lib/
 └── data/menu.json            # Pizza and topping definitions
 
 data/orders/                  # Runtime order storage (JSON files)
+
+e2e/                          # Playwright E2E tests (parallel-safe)
+├── homepage.spec.ts          # Landing page, hero, features, popular pizzas
+├── menu.spec.ts              # Menu listing, size selectors, add to cart
+├── cart.spec.ts              # Cart display, quantity controls, persistence
+├── checkout.spec.ts          # Form fields, validation, order submission
+├── order-confirmation.spec.ts # Order details, totals, error states
+├── navigation.spec.ts        # Header/footer links, theme toggle, 404
+└── full-order-flow.spec.ts   # Complete browse → order → confirm flow
 ```
 
 ## Code Style & Conventions
@@ -275,6 +286,9 @@ Order: { id, orderNumber, customerInfo, items[], subtotal, tax, deliveryFee, tot
 - Build for production: `npm run build`
 - Run production build: `npm start`
 - Lint code: `npm run lint`
+- Unit tests: `npx jest`
+- E2E tests: `npm run test:e2e`
+- Full test pipeline: `./runtests.ps1`
 
 ### Docker Deployment
 - Build: `docker-compose up --build`
@@ -331,17 +345,106 @@ To replace JSON file storage with a database:
 3. Keep the same API response format
 4. No changes needed to frontend components
 
-## Testing Checklist
+## Testing
+
+### Test Architecture
+- **Unit Tests**: Jest 30 + React Testing Library in `__tests__/` directories co-located with source files
+- **E2E Tests**: Playwright in `e2e/` directory, running against the live Next.js dev server
+- **Test Runner Script**: `runtests.ps1` runs lint → tsc → build → Jest → Playwright in sequence
+
+### Running Tests
+```bash
+# Unit tests only
+npx jest
+
+# E2E tests only (starts dev server automatically)
+npm run test:e2e
+
+# E2E tests in headed mode (visible browser)
+npm run test:e2e:headed
+
+# View last E2E report
+npm run test:e2e:report
+
+# Full pipeline (lint, typecheck, build, unit, e2e)
+./runtests.ps1
+```
+
+### E2E Testing with Playwright
+
+#### Configuration (`playwright.config.ts`)
+- **Workers**: 5 locally, 1 in CI (`workers: process.env.CI ? 1 : 5`)
+- **Parallel**: `fullyParallel: true` — all tests run concurrently across workers
+- **Browser**: Chromium only
+- **Retries**: 2 in CI, 0 locally
+- **Web Server**: Automatically starts `npm run dev` and waits for `localhost:3000`
+- **Artifacts**: Screenshots on failure, traces on first retry
+
+#### Writing Parallel-Safe E2E Tests
+All E2E tests **must** be safe to run in parallel with 5 concurrent workers. Follow these rules:
+
+1. **No shared mutable state**: Each test must be fully independent. Never rely on state left by another test (e.g., cart contents, placed orders). Use `test.beforeEach` to set up required state per test.
+2. **Use SPA navigation for stateful flows**: Do NOT use `page.goto('/checkout')` for pages that depend on client-side state (e.g., cart loaded from localStorage). Instead, navigate through the app (menu → add items → click cart link → click checkout). This ensures Context and localStorage are loaded.
+3. **Use exact selectors to avoid strict-mode violations**: Playwright's strict mode fails when a selector matches multiple elements. Use `{ exact: true }` for text matching (e.g., `getByRole('button', { name: 'Large', exact: true })`) and scope selectors to specific containers (e.g., `page.locator('header').getByRole('link', { name: 'Menu' })`).
+4. **Use accessible selectors**: Prefer `getByRole`, `getByLabel`, `getByText` over CSS selectors. Use `aria-label` attributes for icon-only buttons (e.g., `getByLabel('Increase quantity')`, `getByLabel('Remove item')`).
+5. **Wait for navigation and network**: Use `page.waitForURL()` after actions that trigger navigation. Use `expect(locator).toBeVisible()` instead of assuming elements are immediately present.
+6. **Avoid hardcoded timeouts**: Use Playwright's built-in auto-waiting. Only add explicit timeouts when dealing with animations or server processing.
+7. **Clean up after order placement**: Tests that place orders create server-side JSON files. The test should verify the order succeeded but does not need to delete the file — the `data/orders/` directory is gitignored.
+
+#### E2E Test File Conventions
+- **File naming**: `feature-name.spec.ts` (kebab-case)
+- **Location**: All E2E tests go in the `e2e/` directory (not in `__tests__/`)
+- **Describe blocks**: Use `test.describe('Feature Name', ...)` for grouping
+- **Test names**: Descriptive, starting with "should" (e.g., `should display all menu items`)
+
+#### Example E2E Test Pattern
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Cart Page', () => {
+  test.beforeEach(async ({ page }) => {
+    // Navigate through the app to set up state
+    await page.goto('/menu');
+    await page.waitForSelector('[data-testid="pizza-card"]');
+  });
+
+  test('should add item and display in cart', async ({ page }) => {
+    // Use exact matching for size buttons
+    const firstPizza = page.locator('[data-testid="pizza-card"]').first();
+    await firstPizza.getByRole('button', { name: 'Large', exact: true }).click();
+    await firstPizza.getByRole('button', { name: /add to cart/i }).click();
+
+    // Navigate via the app, not page.goto
+    await page.locator('a[href="/cart"]').click();
+    await page.waitForURL('/cart');
+
+    // Assert with accessible selectors
+    await expect(page.getByRole('heading', { name: /your cart/i })).toBeVisible();
+  });
+});
+```
+
+### Unit Testing with Jest
+
+#### Conventions
+- **Location**: `__tests__/` directory co-located with the source file
+- **File naming**: `SourceFile.test.tsx` or `source-file.test.ts`
+- **Mocking**: Use `jest.mock()` for modules, `jest.spyOn()` for methods
+- **Console noise**: Suppress expected `console.warn`/`console.error` with `jest.spyOn(console, 'warn').mockImplementation()` and assert the spy was called. Always call `spy.mockRestore()` after.
+- **Server Components**: Mock as needed since Jest runs in jsdom
+- **Client Components**: Wrap in required providers (e.g., `<CartProvider>`)
+
+### Testing Checklist
 When making changes, verify:
 - [ ] TypeScript compiles without errors (`npm run build`)
+- [ ] All Jest unit tests pass (`npx jest`)
+- [ ] All Playwright E2E tests pass (`npm run test:e2e`)
+- [ ] No console warnings or errors in test output
 - [ ] App runs in development (`npm run dev`)
 - [ ] No console errors in browser
 - [ ] Cart persists across page refreshes
-- [ ] Order submission creates JSON file
-- [ ] Order confirmation page displays correctly
 - [ ] Mobile responsive design works
 - [ ] Docker build completes successfully
-- [ ] All interactive elements function properly
 
 ## Quick Reference
 
