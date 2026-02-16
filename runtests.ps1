@@ -63,6 +63,18 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host " Running E2E Tests (Playwright)" -ForegroundColor Cyan
+Write-Host "========================================`n" -ForegroundColor Cyan
+
+npx playwright test
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nE2E Tests FAILED" -ForegroundColor Red
+    $exitCode = 1
+} else {
+    Write-Host "`nE2E Tests PASSED" -ForegroundColor Green
+}
+
+Write-Host "`n========================================" -ForegroundColor Cyan
 if ($exitCode -eq 0) {
     Write-Host " All checks PASSED" -ForegroundColor Green
 } else {

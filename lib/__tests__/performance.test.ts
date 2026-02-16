@@ -29,6 +29,7 @@ describe('Performance Monitoring', () => {
     });
 
     it('should identify slow synchronous operations', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       // Force a slow operation
       trackPerformanceSync(
         'slow-sync-operation',
@@ -46,6 +47,8 @@ describe('Performance Monitoring', () => {
       expect(slowOps.length).toBeGreaterThan(0);
       expect(slowOps[0].isSlowOperation).toBe(true);
       expect(slowOps[0].duration).toBeGreaterThan(PERFORMANCE_THRESHOLDS.CALCULATION);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('should handle errors in tracked functions', () => {
@@ -100,6 +103,7 @@ describe('Performance Monitoring', () => {
     });
 
     it('should identify slow async operations', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       await trackPerformance(
         'slow-async-operation',
         async () => {
@@ -112,6 +116,8 @@ describe('Performance Monitoring', () => {
       const slowOps = performanceLogger.getSlowOperations();
       expect(slowOps.length).toBeGreaterThan(0);
       expect(slowOps[0].isSlowOperation).toBe(true);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('should handle async errors', async () => {
@@ -168,6 +174,7 @@ describe('Performance Monitoring', () => {
     });
 
     it('should generate performance summary', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       trackPerformanceSync('fast-op', () => 1, 100);
       trackPerformanceSync('slow-op', () => {
         const start = Date.now();
@@ -181,6 +188,8 @@ describe('Performance Monitoring', () => {
       expect(summary.averageDuration).toBeGreaterThan(0);
       expect(summary.slowestOperation).not.toBeNull();
       expect(summary.slowestOperation!.operationName).toBe('slow-op');
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('should clear all metrics', () => {
@@ -265,6 +274,7 @@ describe('Performance Monitoring', () => {
     });
 
     it('should identify performance bottlenecks', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       // Simulate various operations
       trackPerformanceSync('fast-calculation', () => 42, 100);
       trackPerformanceSync('slow-calculation', () => {
@@ -281,6 +291,8 @@ describe('Performance Monitoring', () => {
       // This would alert SRE team
       expect(slowOps[0].isSlowOperation).toBe(true);
       expect(slowOps[0].duration).toBeGreaterThan(slowOps[0].threshold);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
   });
 

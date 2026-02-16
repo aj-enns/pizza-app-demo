@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import CartSummary from '@/components/CartSummary';
@@ -12,6 +12,7 @@ export default function CheckoutPage() {
   const { items, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isOrderPlaced, setIsOrderPlaced] = useState(false);
   
   const [formData, setFormData] = useState<CustomerInfo>({
     name: '',
@@ -50,6 +51,7 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (data.success) {
+        setIsOrderPlaced(true);
         clearCart();
         router.push(`/order-confirmation?orderId=${data.data.id}`);
       } else {
@@ -63,10 +65,11 @@ export default function CheckoutPage() {
     }
   };
 
-  if (items.length === 0) {
-    router.push('/cart');
-    return null;
-  }
+  useEffect(() => {
+    if (items.length === 0 && !isOrderPlaced && !loading) {
+      router.push('/cart');
+    }
+  }, [items.length, isOrderPlaced, loading, router]);
 
   return (
     <div className="container mx-auto px-4 py-12">

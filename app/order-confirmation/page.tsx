@@ -24,6 +24,8 @@ function OrderConfirmationContent() {
           setLoading(false);
         })
         .catch(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, [orderId]);
 

@@ -311,6 +311,7 @@ describe('POST /api/orders', () => {
   });
 
   it('should handle malformed JSON', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
     const request = new NextRequest('http://localhost:3000/api/orders', {
       method: 'POST',
       body: 'not json',
@@ -322,5 +323,7 @@ describe('POST /api/orders', () => {
     // NextRequest.json() throws SyntaxError which gets caught as 400 or 500
     expect([400, 500]).toContain(response.status);
     expect(data.success).toBe(false);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
