@@ -1,5 +1,8 @@
+import { getVersion } from '@/lib/version';
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const version = getVersion();
 
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-white mt-auto">
@@ -35,6 +38,13 @@ export default function Footer() {
         
         <div className="border-t border-gray-800 dark:border-gray-900 mt-8 pt-6 text-center text-gray-400 dark:text-gray-500">
           <p>&copy; {currentYear} PizzaHub. All rights reserved.</p>
+          <p className="mt-2 text-sm">
+            v{version}
+            {' · '}
+            <a href="/changelog" className="hover:text-white transition-colors underline">
+              Changelog
+            </a>
+          </p>
         </div>
       </div>
     </footer>

@@ -8,7 +8,7 @@ const mockPizza: Pizza = {
   id: 'margherita',
   name: 'Margherita',
   description: 'Classic pizza with fresh mozzarella and basil',
-  category: 'Classic',
+  category: 'classic',
   imageUrl: 'https://example.com/pizza.jpg',
   basePrice: 10.99,
   sizes: [
@@ -33,7 +33,7 @@ describe('PizzaCard', () => {
 
   it('should render pizza category', () => {
     renderWithCart(<PizzaCard pizza={mockPizza} />);
-    expect(screen.getByText('Classic')).toBeInTheDocument();
+    expect(screen.getByText('classic')).toBeInTheDocument();
   });
 
   it('should render all available sizes', () => {

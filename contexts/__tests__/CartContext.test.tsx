@@ -308,11 +308,17 @@ describe('CartContext', () => {
     });
 
     it('should handle invalid localStorage data gracefully', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       localStorage.setItem('pizza-cart', 'invalid json');
       
       const { result } = renderHook(() => useCart(), { wrapper });
       
       expect(result.current.items).toHaveLength(0);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to load cart:',
+        expect.any(SyntaxError)
+      );
+      consoleSpy.mockRestore();
     });
   });
 });
