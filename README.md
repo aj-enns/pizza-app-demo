@@ -101,6 +101,44 @@ docker run -p 3000:3000 -v pizza-data:/app/data/orders pizza-ordering-app
 └── package.json        # Dependencies and scripts
 ```
 
+## Order Flow
+
+```mermaid
+flowchart TD
+    subgraph Customer Journey
+        A[🏠 Homepage] -->|Browse Menu| B[🍕 Menu Page]
+        B -->|Select Pizza & Size| C[Add to Cart]
+        C -->|Continue Shopping| B
+        C -->|View Cart| D[🛒 Cart Page]
+        D -->|Update Quantities| D
+        D -->|Remove Items| D
+        D -->|Proceed to Checkout| E[📝 Checkout Page]
+        E -->|Fill Customer Info| F{Form Valid?}
+        F -->|No| E
+        F -->|Yes| G[Submit Order]
+    end
+
+    subgraph Backend Processing
+        G -->|POST /api/orders| H[Create Order]
+        H -->|Generate Order Number| I[Save to JSON File]
+        I -->|Return Order ID| J[✅ Order Confirmation]
+    end
+
+    subgraph Data Flow
+        K[(localStorage)] <-->|Persist Cart| D
+        L[(data/orders/*.json)] <-->|Store Orders| I
+        M[(lib/data/menu.json)] -->|Load Menu| B
+    end
+
+    J -->|Order Again| B
+
+    style A fill:#f9f,stroke:#333
+    style J fill:#9f9,stroke:#333
+    style K fill:#ff9,stroke:#333
+    style L fill:#ff9,stroke:#333
+    style M fill:#ff9,stroke:#333
+```
+
 ## Features Breakdown
 
 ### 1. Menu Browsing
