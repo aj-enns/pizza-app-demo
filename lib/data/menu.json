@@ -145,5 +145,12 @@
     { "id": "basil", "name": "Fresh Basil", "price": 1.0, "category": "vegetable" },
     { "id": "cilantro", "name": "Cilantro", "price": 1.0, "category": "vegetable" },
     { "id": "red-pepper", "name": "Crushed Red Pepper", "price": 0.5, "category": "vegetable" }
+  ],
+  "crusts": [
+    { "id": "regular", "name": "Regular Crust", "price": 0 },
+    { "id": "thin", "name": "Thin Crust", "price": 0 },
+    { "id": "thick", "name": "Thick Crust", "price": 1.5 },
+    { "id": "stuffed", "name": "Stuffed Crust", "price": 3.0 },
+    { "id": "gluten-free", "name": "Gluten-Free Crust", "price": 3.5 }
   ]
 }

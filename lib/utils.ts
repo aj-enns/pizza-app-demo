@@ -1,30 +1,50 @@
-import { Pizza, Topping, PizzaSize, CartItem } from './types';
+import { Pizza, Topping, PizzaSize, CartItem, Crust, ToppingWithPlacement } from './types';
 import menuData from './data/menu.json';
 import { trackPerformanceSync, PERFORMANCE_THRESHOLDS } from './performance';
+
+// Menu data structure interface
+interface MenuData {
+  pizzas: Pizza[];
+  toppings: Topping[];
+  crusts: Crust[];
+}
+
+// Type-safe menu data
+const typedMenuData = menuData as unknown as MenuData;
 
 // Get all pizzas
 export function getPizzas(): Pizza[] {
   return trackPerformanceSync(
     'getPizzas',
-    () => menuData.pizzas as Pizza[],
+    () => typedMenuData.pizzas,
     PERFORMANCE_THRESHOLDS.DATABASE_QUERY,
-    { operation: 'readMenuData', pizzaCount: menuData.pizzas.length }
+    { operation: 'readMenuData', pizzaCount: typedMenuData.pizzas.length }
   );
 }
 
 // Get pizza by ID
 export function getPizzaById(id: string): Pizza | undefined {
-  return menuData.pizzas.find(pizza => pizza.id === id) as Pizza | undefined;
+  return typedMenuData.pizzas.find(pizza => pizza.id === id);
 }
 
 // Get all toppings
 export function getToppings(): Topping[] {
-  return menuData.toppings as Topping[];
+  return typedMenuData.toppings;
 }
 
 // Get topping by ID
 export function getToppingById(id: string): Topping | undefined {
-  return menuData.toppings.find(topping => topping.id === id) as Topping | undefined;
+  return typedMenuData.toppings.find(topping => topping.id === id);
+}
+
+// Get all crusts
+export function getCrusts(): Crust[] {
+  return typedMenuData.crusts;
+}
+
+// Get crust by ID
+export function getCrustById(id: string): Crust | undefined {
+  return typedMenuData.crusts.find(crust => crust.id === id);
 }
 
 // Size labels for display
@@ -59,6 +79,70 @@ export function calculateItemPrice(
     },
     PERFORMANCE_THRESHOLDS.CALCULATION,
     { size, toppingCount: toppings.length, basePrice }
+  );
+}
+
+// Calculate price for custom pizza with half-and-half toppings
+export function calculateCustomItemPrice(
+  basePrice: number,
+  size: PizzaSize,
+  sizeMultiplier: number,
+  customToppings: ToppingWithPlacement[],
+  defaultToppings: string[],
+  customCrust?: string
+): number {
+  return trackPerformanceSync(
+    'calculateCustomItemPrice',
+    () => {
+      const sizedPrice = basePrice * sizeMultiplier;
+      
+      // Calculate custom toppings cost
+      let toppingsPrice = 0;
+      const toppingCounts = new Map<string, { full: number; half: number }>();
+      
+      // Count toppings by placement
+      customToppings.forEach(({ toppingId, placement }) => {
+        if (!defaultToppings.includes(toppingId)) {
+          const current = toppingCounts.get(toppingId) || { full: 0, half: 0 };
+          if (placement === 'full') {
+            current.full += 1;
+          } else {
+            current.half += 1;
+          }
+          toppingCounts.set(toppingId, current);
+        }
+      });
+      
+      // Calculate price: full placement = full price, two halves = full price, one half = half price
+      toppingCounts.forEach((counts, toppingId) => {
+        const topping = getToppingById(toppingId);
+        if (topping) {
+          const fullCount = counts.full;
+          const halfCount = counts.half;
+          
+          // Each full placement counts as full price
+          toppingsPrice += fullCount * topping.price;
+          
+          // Every two half placements count as one full price
+          const fullFromHalves = Math.floor(halfCount / 2);
+          const remainingHalf = halfCount % 2;
+          
+          toppingsPrice += fullFromHalves * topping.price;
+          toppingsPrice += remainingHalf * (topping.price / 2);
+        }
+      });
+      
+      // Add crust price if custom
+      let crustPrice = 0;
+      if (customCrust) {
+        const crust = getCrustById(customCrust);
+        crustPrice = crust?.price || 0;
+      }
+      
+      return sizedPrice + toppingsPrice + crustPrice;
+    },
+    PERFORMANCE_THRESHOLDS.CALCULATION,
+    { size, toppingCount: customToppings.length, basePrice }
   );
 }
 

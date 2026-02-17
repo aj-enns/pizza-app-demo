@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CartItem as CartItemType } from '@/lib/types';
-import { formatPrice, SIZE_LABELS, getToppingById } from '@/lib/utils';
+import { formatPrice, SIZE_LABELS, getToppingById, getCrustById } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, X } from 'lucide-react';
 
@@ -12,10 +13,53 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  const extraToppings = item.selectedToppings.filter(toppingId => {
-    const topping = getToppingById(toppingId);
-    return topping && topping.price > 0;
-  });
+  // Memoized topping groups - single pass through array
+  const toppingGroups = useMemo(() => {
+    if (!item.customToppings || item.customToppings.length === 0) return null;
+    
+    const groups: Record<'full' | 'left' | 'right', string[]> = {
+      full: [],
+      left: [],
+      right: [],
+    };
+    
+    // Single iteration through toppings
+    for (const topping of item.customToppings) {
+      const name = getToppingById(topping.toppingId)?.name;
+      if (name) {
+        groups[topping.placement].push(name);
+      }
+    }
+    
+    return groups;
+  }, [item.customToppings]);
+
+  // Render custom toppings using memoized groups
+  const renderCustomToppings = () => {
+    if (!toppingGroups) return null;
+    
+    return (
+      <div className="mb-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+        {toppingGroups.full.length > 0 && (
+          <p>Whole: {toppingGroups.full.join(', ')}</p>
+        )}
+        {toppingGroups.left.length > 0 && (
+          <p>Left Half: {toppingGroups.left.join(', ')}</p>
+        )}
+        {toppingGroups.right.length > 0 && (
+          <p>Right Half: {toppingGroups.right.join(', ')}</p>
+        )}
+      </div>
+    );
+  };
+
+  // For regular pizzas, show extra toppings
+  const extraToppings = !item.isCustom
+    ? item.selectedToppings.filter(toppingId => {
+        const topping = getToppingById(toppingId);
+        return topping && topping.price > 0;
+      })
+    : [];
 
   return (
     <div className="card p-4 mb-4 animate-slide-up">
@@ -23,8 +67,20 @@ export default function CartItem({ item }: CartItemProps) {
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.pizzaName}</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                {item.pizzaName}
+                {item.isCustom && (
+                  <span className="ml-2 text-xs font-normal bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded">
+                    Custom
+                  </span>
+                )}
+              </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{SIZE_LABELS[item.size]}</p>
+              {item.customCrust && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {getCrustById(item.customCrust)?.name}
+                </p>
+              )}
             </div>
             <button
               onClick={() => removeItem(item.id)}
@@ -35,12 +91,14 @@ export default function CartItem({ item }: CartItemProps) {
             </button>
           </div>
           
-          {extraToppings.length > 0 && (
-            <div className="mb-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
-              </p>
-            </div>
+          {item.isCustom ? renderCustomToppings() : (
+            extraToppings.length > 0 && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
+                </p>
+              </div>
+            )
           )}
           
           <div className="flex items-center justify-between">
