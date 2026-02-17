@@ -62,6 +62,7 @@ export interface CustomerInfo {
 export interface Order {
   id: string;
   orderNumber: string;
+  userId?: string; // Optional - for logged-in users
   customerInfo: CustomerInfo;
   items: CartItem[];
   subtotal: number;
@@ -70,6 +71,50 @@ export interface Order {
   total: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'completed';
   createdAt: string;
+}
+
+// User and Authentication Types
+export interface User {
+  id: string;
+  email: string;
+  password: string; // Hashed password
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  createdAt: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  zipCode: string;
+}
+
+export interface AuthState {
+  user: UserProfile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 // API Response Types
