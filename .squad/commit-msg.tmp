@@ -1,0 +1,6 @@
+chore(squad): WCAG 2.1 AA audit - merge decisions, orchestration logs, session log
+
+Dom (Lead): 22 architectural findings across 10 categories
+Mia (Frontend): 15 component-level findings
+Deduplicated and merged into decisions.md with 4-sprint remediation plan
+Critical: skip link, cart label, error announcements, live regions

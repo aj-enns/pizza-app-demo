@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "persistent_name": "Dom",
+      "role": "Lead",
+      "universe": "Fast & Furious",
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Brian",
+      "role": "Backend Dev",
+      "universe": "Fast & Furious",
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Mia",
+      "role": "Frontend Dev",
+      "universe": "Fast & Furious",
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Tej",
+      "role": "Tester",
+      "universe": "Fast & Furious",
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Scribe",
+      "role": "Scribe",
+      "universe": null,
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Ralph",
+      "role": "Work Monitor",
+      "universe": null,
+      "created_at": "2026-04-13T00:00:00Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  ]
+}
