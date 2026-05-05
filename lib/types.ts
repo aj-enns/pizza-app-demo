@@ -24,7 +24,7 @@ export interface Pizza {
   id: string;
   name: string;
   description: string;
-  category: 'classic' | 'specialty' | 'vegetarian' | 'premium';
+  category: 'classic' | 'specialty' | 'vegetarian' | 'premium' | 'custom';
   imageUrl: string;
   basePrice: number;
   sizes: {

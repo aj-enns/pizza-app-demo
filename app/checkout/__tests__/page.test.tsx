@@ -133,10 +133,9 @@ describe('Checkout Page', () => {
 
   describe('Layout', () => {
     it('should have responsive grid layout', () => {
-      const { container } = renderWithCart(<CheckoutPage />);
-      // Won't render grid if cart is empty
-      const grid = container.querySelector('.grid');
-      expect(grid).toBeNull();
+      renderWithCart(<CheckoutPage />);
+      // With empty cart, redirect happens via useEffect
+      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
     });
 
     it('should render form in main column', () => {

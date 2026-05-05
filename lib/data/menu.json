@@ -119,6 +119,21 @@
         { "size": "xlarge", "priceMultiplier": 1.6 }
       ],
       "defaultToppings": ["mozzarella", "tomato-sauce", "italian-sausage", "jalapeno", "red-pepper"]
+    },
+    {
+      "id": "custom",
+      "name": "Build Your Own",
+      "description": "Create your perfect pizza from scratch — choose your base, pick your toppings, make it yours",
+      "category": "custom",
+      "imageUrl": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?w=800&q=80",
+      "basePrice": 9.99,
+      "sizes": [
+        { "size": "small", "priceMultiplier": 0.8 },
+        { "size": "medium", "priceMultiplier": 1.0 },
+        { "size": "large", "priceMultiplier": 1.3 },
+        { "size": "xlarge", "priceMultiplier": 1.6 }
+      ],
+      "defaultToppings": []
     }
   ],
   "toppings": [

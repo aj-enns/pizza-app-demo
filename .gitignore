@@ -10,6 +10,12 @@
 /coverage
 /test-report
 
+# playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/test-results/
+
 # next.js
 /.next/
 /out/
@@ -81,3 +87,12 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 data/users/user-e2c811ca-f919-47d6-bef3-b55e21bab078.json
+playwright-report/index.html
+# Squad: ignore runtime state (logs, inbox, sessions)
+.squad/orchestration-log/
+.squad/log/
+.squad/decisions/inbox/
+.squad/sessions/
+# Squad: SubSquad activation file (local to this machine)
+.squad-workstream
+test-results/

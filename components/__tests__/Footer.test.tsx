@@ -1,6 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import Footer from '../Footer';
 
+// Set the env var that getVersion reads
+const originalEnv = process.env;
+
+beforeEach(() => {
+  process.env = { ...originalEnv, APP_VERSION: '1.0.0' };
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
+
 describe('Footer', () => {
   it('should render the brand name', () => {
     render(<Footer />);
@@ -49,5 +60,16 @@ describe('Footer', () => {
     
     expect(menuLink).toHaveAttribute('href', '/menu');
     expect(cartLink).toHaveAttribute('href', '/cart');
+  });
+
+  it('should display the version number', () => {
+    render(<Footer />);
+    expect(screen.getByText(/v1\.0\.0/)).toBeInTheDocument();
+  });
+
+  it('should have a changelog link', () => {
+    render(<Footer />);
+    const changelogLink = screen.getByRole('link', { name: /changelog/i });
+    expect(changelogLink).toHaveAttribute('href', '/changelog');
   });
 });

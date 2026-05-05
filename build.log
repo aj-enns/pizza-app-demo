@@ -1,0 +1,36 @@
+   Γû▓ Next.js 15.5.6
+
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ Γ£ô Compiled successfully in 6.6s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/12) ...
+   Generating static pages (3/12) 
+   Generating static pages (6/12) 
+   Generating static pages (9/12) 
+ Γ£ô Generating static pages (12/12)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+Γöî Γùï /                                      174 B         111 kB
+Γö£ Γùï /_not-found                            993 B         103 kB
+Γö£ ╞Æ /api/menu                              134 B         102 kB
+Γö£ ╞Æ /api/orders                            134 B         102 kB
+Γö£ ╞Æ /api/orders/[id]                       134 B         102 kB
+Γö£ Γùï /build-your-own                      2.17 kB         108 kB
+Γö£ Γùï /cart                                2.01 kB         111 kB
+Γö£ Γùï /changelog                             134 B         102 kB
+Γö£ Γùï /checkout                            1.98 kB         108 kB
+Γö£ Γùï /menu                                1.99 kB         113 kB
+Γöö Γùï /order-confirmation                  4.99 kB         110 kB
++ First Load JS shared by all             102 kB
+  Γö£ chunks/255-cf2e1d3491ac955b.js       45.7 kB
+  Γö£ chunks/4bd1b696-c023c6e3521b1417.js  54.2 kB
+  Γöö other shared chunks (total)          1.99 kB
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

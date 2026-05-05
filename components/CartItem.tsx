@@ -13,31 +13,36 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  // Memoized topping groups - single pass through array
+  // Selected cheese (for regular pizzas with cheese selection)
+  const selectedCheese = item.selectedToppings.find(toppingId => {
+    const topping = getToppingById(toppingId);
+    return topping && topping.category === 'cheese';
+  });
+  const cheeseTopping = selectedCheese ? getToppingById(selectedCheese) : null;
+
+  // Memoized custom-topping groups (for custom-built pizzas)
   const toppingGroups = useMemo(() => {
     if (!item.customToppings || item.customToppings.length === 0) return null;
-    
+
     const groups: Record<'full' | 'left' | 'right', string[]> = {
       full: [],
       left: [],
       right: [],
     };
-    
-    // Single iteration through toppings
+
     for (const topping of item.customToppings) {
       const name = getToppingById(topping.toppingId)?.name;
       if (name) {
         groups[topping.placement].push(name);
       }
     }
-    
+
     return groups;
   }, [item.customToppings]);
 
-  // Render custom toppings using memoized groups
   const renderCustomToppings = () => {
     if (!toppingGroups) return null;
-    
+
     return (
       <div className="mb-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
         {toppingGroups.full.length > 0 && (
@@ -53,11 +58,11 @@ export default function CartItem({ item }: CartItemProps) {
     );
   };
 
-  // For regular pizzas, show extra toppings
+  // For regular pizzas, show extra toppings (excluding cheese, shown separately)
   const extraToppings = !item.isCustom
     ? item.selectedToppings.filter(toppingId => {
         const topping = getToppingById(toppingId);
-        return topping && topping.price > 0;
+        return topping && topping.price > 0 && topping.category !== 'cheese';
       })
     : [];
 
@@ -81,6 +86,14 @@ export default function CartItem({ item }: CartItemProps) {
                   {getCrustById(item.customCrust)?.name}
                 </p>
               )}
+              {!item.isCustom && cheeseTopping && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Cheese: {cheeseTopping.name}
+                  {cheeseTopping.price > 0 && (
+                    <span className="text-primary-600 dark:text-primary-500 font-medium"> (+{formatPrice(cheeseTopping.price)})</span>
+                  )}
+                </p>
+              )}
             </div>
             <button
               onClick={() => removeItem(item.id)}
@@ -90,7 +103,7 @@ export default function CartItem({ item }: CartItemProps) {
               <X size={20} />
             </button>
           </div>
-          
+
           {item.isCustom ? renderCustomToppings() : (
             extraToppings.length > 0 && (
               <div className="mb-2">
@@ -100,7 +113,7 @@ export default function CartItem({ item }: CartItemProps) {
               </div>
             )
           )}
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -119,7 +132,7 @@ export default function CartItem({ item }: CartItemProps) {
                 <Plus size={16} />
               </button>
             </div>
-            
+
             <div className="text-right">
               <p className="text-lg font-bold text-primary-600 dark:text-primary-500">
                 {formatPrice(item.totalPrice * item.quantity)}

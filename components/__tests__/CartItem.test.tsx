@@ -21,9 +21,31 @@ const mockCartItemWithExtras: CartItemType = {
   pizzaName: 'Pepperoni',
   size: 'large',
   basePrice: 12.99,
-  selectedToppings: ['mozzarella', 'pepperoni', 'mushrooms'],
+  selectedToppings: ['mozzarella', 'pepperoni', 'mushroom'],
   quantity: 1,
   totalPrice: 14.99,
+};
+
+const mockCartItemWithPremiumCheese: CartItemType = {
+  id: '3',
+  pizzaId: 'margherita',
+  pizzaName: 'Margherita',
+  size: 'medium',
+  basePrice: 10.99,
+  selectedToppings: ['parmesan', 'tomato-sauce'],
+  quantity: 1,
+  totalPrice: 12.49,
+};
+
+const mockCartItemWithGorgonzola: CartItemType = {
+  id: '4',
+  pizzaId: 'pepperoni',
+  pizzaName: 'Pepperoni',
+  size: 'large',
+  basePrice: 12.99,
+  selectedToppings: ['gorgonzola', 'pepperoni'],
+  quantity: 1,
+  totalPrice: 16.87,
 };
 
 const renderWithCart = (ui: React.ReactElement) => {
@@ -117,5 +139,53 @@ describe('CartItem', () => {
     
     // Button should be clickable (not throw error)
     expect(removeButton).toBeInTheDocument();
+  });
+
+  describe('Cheese Display', () => {
+    it('should display default mozzarella cheese', () => {
+      renderWithCart(<CartItem item={mockCartItem} />);
+      expect(screen.getByText(/Cheese: Mozzarella/)).toBeInTheDocument();
+    });
+
+    it('should not show price for mozzarella (free)', () => {
+      renderWithCart(<CartItem item={mockCartItem} />);
+      const cheeseText = screen.getByText(/Cheese: Mozzarella/);
+      // Should not show a price indicator for free cheese
+      expect(cheeseText).not.toHaveTextContent('+$');
+    });
+
+    it('should display premium cheese selection', () => {
+      renderWithCart(<CartItem item={mockCartItemWithPremiumCheese} />);
+      expect(screen.getByText(/Cheese: Parmesan/)).toBeInTheDocument();
+    });
+
+    it('should show upgrade price for premium cheese', () => {
+      renderWithCart(<CartItem item={mockCartItemWithPremiumCheese} />);
+      expect(screen.getByText(/\+\$1\.50/)).toBeInTheDocument();
+    });
+
+    it('should display gorgonzola with correct price', () => {
+      renderWithCart(<CartItem item={mockCartItemWithGorgonzola} />);
+      expect(screen.getByText(/Cheese: Gorgonzola/)).toBeInTheDocument();
+      expect(screen.getByText(/\+\$2\.00/)).toBeInTheDocument();
+    });
+
+    it('should not include cheese in extra toppings list', () => {
+      renderWithCart(<CartItem item={mockCartItemWithPremiumCheese} />);
+      // Extra toppings should only show non-cheese paid toppings
+      // Parmesan should appear in cheese line, not in "Extra:" line
+      const extraText = screen.queryByText(/Extra:/);
+      if (extraText) {
+        expect(extraText).not.toHaveTextContent('Parmesan');
+      }
+    });
+
+    it('should show cheese separately from extra toppings', () => {
+      renderWithCart(<CartItem item={mockCartItemWithExtras} />);
+      // Should have cheese line
+      expect(screen.getByText(/Cheese: Mozzarella/)).toBeInTheDocument();
+      // Should have extra toppings line (mushrooms have price)
+      expect(screen.getByText(/Extra:/)).toBeInTheDocument();
+    });
   });
 });

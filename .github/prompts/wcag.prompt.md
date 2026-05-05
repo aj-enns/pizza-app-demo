@@ -1,0 +1,3 @@
+- I want you to download the WCAG 2.1 AA checklist form this website https://webaim.org/standards/wcag/checklist and store as a MD file under "WCAG-2.1-AA" folder.
+- Based on this checklist, I want you to build test cases using playwrite. Build me a document called wcagtesting.md within the same folder, and in that document, create an exec summary that describes, a plan on how to test using playwrite, and then build a detailed testing plan. The test cases should be grouped by WCAG's checklist grouping and if the test case fails, I want the report to mention the file, line number where it fails, the reason and remedition where possible
+- Start implementation of the strategy as suggested in th wcagtesting.md document

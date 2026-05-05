@@ -1,10 +1,10 @@
-import { getPizzas } from '@/lib/utils';
+import { getMenuPizzas } from '@/lib/utils';
 import PizzaCard from '@/components/PizzaCard';
 import Link from 'next/link';
 import { ChefHat } from 'lucide-react';
 
 export default function MenuPage() {
-  const pizzas = getPizzas();
+  const pizzas = getMenuPizzas();
 
   return (
     <div className="container mx-auto px-4 py-12">
