@@ -1,0 +1,144 @@
+name: Deploy Infrastructure (Bicep)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-infra.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-infra.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'whatif'
+        type: choice
+        options:
+          - whatif
+          - deploy
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'pizza-app-rg' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  BICEP_FILE: infra/main.bicep
+  BICEP_PARAMS_FILE: infra/main.bicepparam
+  DEPLOYMENT_NAME: pizza-app-${{ github.run_id }}
+
+jobs:
+  validate:
+    name: Lint & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep lint
+        run: az bicep build --file "$BICEP_FILE"
+
+      - name: Ensure resource group
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: What-If
+        id: whatif
+        run: |
+          set -o pipefail
+          az deployment group what-if \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$DEPLOYMENT_NAME-whatif" \
+            --template-file "$BICEP_FILE" \
+            --parameters "$BICEP_PARAMS_FILE" \
+            --result-format FullResourcePayloads | tee whatif.txt
+
+      - name: Comment What-If on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('whatif.txt', 'utf8');
+            const truncated = body.length > 60000 ? body.slice(0, 60000) + '\n...(truncated)' : body;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '### Bicep What-If\n```\n' + truncated + '\n```'
+            });
+
+  deploy:
+    name: Deploy
+    needs: validate
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      acrLoginServer: ${{ steps.deploy.outputs.acrLoginServer }}
+      acrName: ${{ steps.deploy.outputs.acrName }}
+      containerAppName: ${{ steps.deploy.outputs.containerAppName }}
+      containerAppFqdn: ${{ steps.deploy.outputs.containerAppFqdn }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure resource group
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: Read VERSION
+        id: version
+        run: echo "value=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy Bicep
+        id: deploy
+        run: |
+          OUTPUTS=$(az deployment group create \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$DEPLOYMENT_NAME" \
+            --template-file "$BICEP_FILE" \
+            --parameters "$BICEP_PARAMS_FILE" \
+            --parameters appVersion="${{ steps.version.outputs.value }}" \
+            --query properties.outputs \
+            --output json)
+          echo "$OUTPUTS"
+          echo "acrLoginServer=$(echo "$OUTPUTS" | jq -r '.acrLoginServer.value')" >> "$GITHUB_OUTPUT"
+          echo "acrName=$(echo "$OUTPUTS" | jq -r '.acrName.value')" >> "$GITHUB_OUTPUT"
+          echo "containerAppName=$(echo "$OUTPUTS" | jq -r '.containerAppName.value')" >> "$GITHUB_OUTPUT"
+          echo "containerAppFqdn=$(echo "$OUTPUTS" | jq -r '.containerAppFqdn.value')" >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        run: |
+          echo "### Infrastructure deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Resource Group: \`$AZURE_RESOURCE_GROUP\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ACR: \`${{ steps.deploy.outputs.acrLoginServer }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Container App: \`${{ steps.deploy.outputs.containerAppName }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: https://${{ steps.deploy.outputs.containerAppFqdn }}" >> "$GITHUB_STEP_SUMMARY"
