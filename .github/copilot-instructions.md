@@ -94,6 +94,9 @@ data/orders/                  # Runtime order storage (JSON files)
 
 ### Naming Standards
 
+#### Primary Convention: camelCase
+**camelCase is the default naming convention for this project.** Use camelCase for all variables, functions, properties, and identifiers unless a specific exception applies (listed below).
+
 #### File Naming
 - **Components**: PascalCase (e.g., `PizzaCard.tsx`, `CartItem.tsx`, `Header.tsx`)
 - **Pages**: lowercase with hyphens for routes (e.g., `page.tsx`, `order-confirmation/page.tsx`)
@@ -102,13 +105,15 @@ data/orders/                  # Runtime order storage (JSON files)
 - **Data files**: lowercase with hyphens (e.g., `menu.json`)
 - **Config files**: lowercase with dots (e.g., `next.config.js`, `tailwind.config.ts`)
 
-#### Variable & Function Naming
+#### Variable & Function Naming (camelCase)
 - **Variables**: camelCase (e.g., `cartItems`, `totalPrice`, `orderNumber`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `STORAGE_KEY`, `DATA_DIR`, `SIZE_LABELS`)
+- **Constants**: UPPER_SNAKE_CASE only for true compile-time constants (e.g., `STORAGE_KEY`, `DATA_DIR`, `SIZE_LABELS`)
 - **Functions**: camelCase with verb prefixes (e.g., `getPizzas()`, `calculateItemPrice()`, `formatPrice()`)
 - **React Components**: PascalCase (e.g., `function PizzaCard()`, `function CartSummary()`)
 - **Custom Hooks**: camelCase starting with "use" (e.g., `useCart()`)
 - **Event Handlers**: camelCase with "handle" prefix (e.g., `handleSubmit`, `handleAddToCart`, `handleChange`)
+- **Parameters**: camelCase (e.g., `userId`, `pizzaId`, `orderData`)
+- **Object properties**: camelCase (e.g., `{ firstName, lastName, emailAddress }`)
 
 #### Type & Interface Naming
 - **Interfaces**: PascalCase (e.g., `Pizza`, `CartItem`, `Order`, `CustomerInfo`)
@@ -136,33 +141,58 @@ data/orders/                  # Runtime order storage (JSON files)
 - **Endpoints**: lowercase with hyphens (e.g., `/api/menu`, `/api/orders`, `/api/orders/[id]`)
 - **HTTP Methods**: Use appropriate verbs (GET, POST, PUT, DELETE)
 - **Response fields**: camelCase (e.g., `{ success, data, error }`)
+- **Request body fields**: camelCase (e.g., `{ customerInfo, orderItems }`)
 
 #### Context & Provider Naming
 - **Context**: ComponentName + "Context" (e.g., `CartContext`)
 - **Provider**: ComponentName + "Provider" (e.g., `CartProvider`)
 - **Hook**: "use" + ComponentName (e.g., `useCart()`)
 
-#### State Variable Naming
+#### State Variable Naming (camelCase)
 - **Boolean states**: Use "is", "has", "should" prefixes (e.g., `isLoading`, `hasError`, `isAdding`)
 - **Array states**: Plural nouns (e.g., `items`, `pizzas`, `orders`)
 - **Object states**: Singular nouns (e.g., `formData`, `order`, `customerInfo`)
 - **Setters**: "set" + StateName (e.g., `setIsLoading`, `setItems`, `setFormData`)
 
+#### camelCase Summary Table
+| Use camelCase For | Examples |
+|-------------------|----------|
+| Variables | `userName`, `totalPrice`, `cartItems` |
+| Functions | `calculateTotal()`, `fetchOrders()`, `validateInput()` |
+| Parameters | `userId`, `orderData`, `configOptions` |
+| Object properties | `firstName`, `createdAt`, `isActive` |
+| Custom hooks | `useCart()`, `useTheme()`, `useLocalStorage()` |
+| Event handlers | `handleClick`, `handleSubmit`, `onChange` |
+| State variables | `isLoading`, `hasError`, `formData` |
+
+#### Exceptions to camelCase
+| Exception | Convention | Examples |
+|-----------|------------|----------|
+| React Components | PascalCase | `PizzaCard`, `CartSummary` |
+| Interfaces/Types | PascalCase | `Pizza`, `CartItem`, `Order` |
+| Constants | UPPER_SNAKE_CASE | `API_URL`, `MAX_ITEMS` |
+| CSS classes | kebab-case | `.btn-primary`, `.card` |
+| HTML IDs | kebab-case | `order-number`, `submit-btn` |
+| URL paths | kebab-case | `/api/orders`, `/order-confirmation` |
+
 #### Examples
 ```typescript
-// ✅ Good naming
+// ✅ Good naming (camelCase by default)
 const orderNumber = generateOrderNumber();
 const [isLoading, setIsLoading] = useState(false);
+const customerInfo = { firstName: 'John', lastName: 'Doe' };
 function handleSubmit(e: React.FormEvent) { }
+function calculateItemPrice(basePrice: number, sizeMultiplier: number) { }
 interface PizzaCardProps { pizza: Pizza; }
-const STORAGE_KEY = 'pizza-cart';
+const STORAGE_KEY = 'pizza-cart'; // Exception: true constant
 
-// ❌ Bad naming
-const OrderNum = generate_order_num();
-const [loading, changeLoading] = useState(false);
-function submit(e: React.FormEvent) { }
-interface Props { pizza: Pizza; }
-const storagekey = 'pizza-cart';
+// ❌ Bad naming (avoid these patterns)
+const OrderNum = generate_order_num();        // Don't use snake_case or PascalCase for variables
+const [loading, changeLoading] = useState(false);  // Use "is" prefix and "set" prefix
+const customer_info = { first_name: 'John' }; // Don't use snake_case
+function submit(e: React.FormEvent) { }       // Use "handle" prefix for event handlers
+interface Props { pizza: Pizza; }             // Use ComponentName + "Props"
+const storagekey = 'pizza-cart';              // Constants should be UPPER_SNAKE_CASE
 ```
 
 ## Key Features & Implementation Details
