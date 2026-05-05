@@ -8,10 +8,11 @@
       "command": "npm run dev"
     },
     {
-      "name": "Next.js: debug client-side",
+      "name": "Next.js: debug client-side (attach)",
       "type": "chrome",
-      "request": "launch",
-      "url": "http://localhost:3000",
+      "request": "attach",
+      "port": 9222,
+      "urlFilter": "http://localhost:3000*",
       "webRoot": "${workspaceFolder}"
     },
     {
@@ -22,23 +23,8 @@
       "serverReadyAction": {
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",
-        "action": "debugWithChrome"
+        "action": "openExternally"
       }
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Next.js: debug full stack (compound)",
-      "configurations": [
-        "Next.js: debug server-side",
-        "Next.js: debug client-side"
-      ],
-      "presentation": {
-        "hidden": false,
-        "group": "",
-        "order": 1
-      },
-      "stopAll": true
     }
   ]
 }

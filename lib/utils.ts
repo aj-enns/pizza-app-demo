@@ -12,6 +12,11 @@ export function getPizzas(): Pizza[] {
   );
 }
 
+// Get menu pizzas (excludes custom/build-your-own)
+export function getMenuPizzas(): Pizza[] {
+  return getPizzas().filter(p => p.category !== 'custom');
+}
+
 // Get pizza by ID
 export function getPizzaById(id: string): Pizza | undefined {
   return menuData.pizzas.find(pizza => pizza.id === id) as Pizza | undefined;

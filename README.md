@@ -7,9 +7,13 @@ A modern, responsive pizza ordering website built with Next.js 15, TypeScript, T
 - 🍕 **Browse Menu** - View delicious pizzas with different categories
 - 🛒 **Shopping Cart** - Add/remove items, adjust quantities with React Context API
 - 📦 **Order Management** - Complete checkout with delivery information
+- �️ **Strict Validation** - Secure, server-side Zod payload validation to prevent tampering and XSS
 - 💾 **JSON Storage** - Orders saved to JSON files for persistence
 - 🎨 **Modern UI** - Beautiful, responsive design with Tailwind CSS
+- 🌗 **Dark Mode** - Built-in light/dark theme toggling with system preference detection
 - 🐳 **Dockerized** - Ready for containerized deployment
+- 🧪 **Robust Testing** - Comprehensive Jest unit tests and Playwright E2E parallel testing
+- 📈 **Versioning System** - Automated changelog generation and version tracking
 - 📊 **SRE Instrumentation** - Built-in performance monitoring and tracking
 - ⚡ **Performance Monitoring** - Real-time tracking of slow operations and bottlenecks
 
@@ -69,11 +73,13 @@ docker run -p 3000:3000 -v pizza-data:/app/data/orders pizza-ordering-app
 ## Project Structure
 
 ```
+├── .github/                 # GitHub actions and Copilot rules
 ├── app/                      # Next.js app directory
 │   ├── api/                 # API routes
 │   │   ├── menu/           # Menu API endpoint
 │   │   └── orders/         # Orders API endpoints
 │   ├── cart/               # Shopping cart page
+│   ├── changelog/          # Release history and version display
 │   ├── checkout/           # Checkout page
 │   ├── menu/               # Menu browsing page
 │   ├── order-confirmation/ # Order confirmation page
@@ -85,20 +91,28 @@ docker run -p 3000:3000 -v pizza-data:/app/data/orders pizza-ordering-app
 │   ├── Footer.tsx
 │   ├── PizzaCard.tsx
 │   ├── CartItem.tsx
+│   ├── ThemeToggle.tsx     # Dark/Light mode switcher
 │   └── CartSummary.tsx
 ├── contexts/               # React Context providers
-│   └── CartContext.tsx    # Shopping cart state management
+│   ├── CartContext.tsx    # Shopping cart state management
+│   └── ThemeContext.tsx   # Dark mode state management
+├── data/                  # Runtime data storage
+│   └── orders/           # JSON order files
+├── docs/                  # Internal documentation
+├── e2e/                   # Playwright E2E integration tests
 ├── lib/                   # Utilities and data
 │   ├── types.ts          # TypeScript type definitions
 │   ├── utils.ts          # Helper functions
 │   └── data/
 │       └── menu.json     # Pizza menu data
-├── data/                  # Runtime data storage
-│   └── orders/           # JSON order files
-├── public/               # Static assets
+├── __tests__/            # Jest Unit tests location
+├── playright.config.ts  # Playwright test configuration
+├── runtests.ps1         # Full pipeline test execution script
 ├── Dockerfile           # Docker configuration
 ├── docker-compose.yml   # Docker Compose configuration
-└── package.json        # Dependencies and scripts
+├── package.json        # Dependencies and scripts
+├── VERSION             # Current application version
+└── CHANGELOG.md        # Feature tracking release history
 ```
 
 ## Order Flow
@@ -204,14 +218,29 @@ volumes:
 - `npm run build` - Build for production
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm test` - Run test suite
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage report
-- `npm run test:report` - Run tests and open HTML report
+- `./runtests.ps1` - Execute the full CI pipeline (Linting, Types, Jest, Playwright)
+- `npm run test` - Run Jest test suite
+- `npm run test:e2e` - Run Playwright parallel E2E tests
 
 ### Adding New Pizzas
 
 Edit `lib/data/menu.json` to add new pizzas or modify existing ones.
+
+## Testing Strategy
+
+This application employs a mature testing strategy documented in `copilot-instructions.md`, featuring:
+
+1. **Unit Testing:** Isolated Jest and React Testing Library tests located directly inside `__tests__/` alongside the source code.
+2. **E2E Testing:** Robust, structurally isolated parallel Playwright tests inside `e2e/`. Every Playwright worker runs the flow entirely to avoid strict-mode or mutable-state collisions. 
+
+To execute the entire suite securely before merge:
+```bash
+./runtests.ps1
+```
+
+## Versioning & Changelog
+
+This project tracks progress via Semantic Versioning (SemVer) utilizing a top-level `VERSION` file. All prominent app additions appear inside `CHANGELOG.md` and are dynamically displayed via `app/changelog/page.tsx` on the application's actual URL for admin review.
 
 ## SRE Instrumentation & Performance Monitoring
 

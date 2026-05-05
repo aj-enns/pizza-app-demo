@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Pizza, PizzaSize } from '@/lib/types';
 import { useCart } from '@/contexts/CartContext';
-import { SIZE_LABELS, formatPrice, calculateItemPrice } from '@/lib/utils';
+import { SIZE_LABELS, formatPrice, calculateItemPrice, getToppings, getToppingById } from '@/lib/utils';
 import { Plus, Check } from 'lucide-react';
 
 interface PizzaCardProps {
@@ -14,17 +14,35 @@ interface PizzaCardProps {
 export default function PizzaCard({ pizza }: PizzaCardProps) {
   const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState<PizzaSize>('medium');
+  const [selectedCheese, setSelectedCheese] = useState<string>('mozzarella');
   const [showCustomize, setShowCustomize] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
+  // Get all available cheese options
+  const cheeseOptions = useMemo(() => {
+    return getToppings().filter(t => t.category === 'cheese');
+  }, []);
+
+  // Get the default cheese for this pizza (usually mozzarella)
+  const defaultCheese = useMemo(() => {
+    return pizza.defaultToppings.find(t => cheeseOptions.some(c => c.id === t)) || 'mozzarella';
+  }, [pizza.defaultToppings, cheeseOptions]);
+
+  // Calculate current toppings with selected cheese
+  const currentToppings = useMemo(() => {
+    // Remove default cheese and add selected cheese
+    const toppingsWithoutCheese = pizza.defaultToppings.filter(t => !cheeseOptions.some(c => c.id === t));
+    return [...toppingsWithoutCheese, selectedCheese];
+  }, [pizza.defaultToppings, selectedCheese, cheeseOptions]);
+
   const sizeConfig = pizza.sizes.find(s => s.size === selectedSize);
   const currentPrice = sizeConfig 
-    ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, pizza.defaultToppings, pizza.defaultToppings)
+    ? calculateItemPrice(pizza.basePrice, selectedSize, sizeConfig.priceMultiplier, currentToppings, pizza.defaultToppings)
     : pizza.basePrice;
 
   const handleAddToCart = () => {
     setIsAdding(true);
-    addItem(pizza.id, selectedSize, pizza.defaultToppings);
+    addItem(pizza.id, selectedSize, currentToppings);
     
     setTimeout(() => {
       setIsAdding(false);
@@ -70,6 +88,36 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
                 {SIZE_LABELS[size].split(' ')[0]}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            Cheese:
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {cheeseOptions.map((cheese) => {
+              const isUpgrade = cheese.price > 0;
+              const isSelected = selectedCheese === cheese.id;
+              return (
+                <button
+                  key={cheese.id}
+                  onClick={() => setSelectedCheese(cheese.id)}
+                  className={`px-3 py-2 rounded-lg border-2 transition-all text-left ${
+                    isSelected
+                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-semibold'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-sm">{cheese.name}</div>
+                  {isUpgrade && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      +{formatPrice(cheese.price)}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
         

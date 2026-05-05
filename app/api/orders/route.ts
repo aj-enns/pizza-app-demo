@@ -1,3 +1,9 @@
+/**
+ * @file app/api/orders/route.ts
+ * @description API Route handler for Pizza Orders. 
+ * Handles order creation (POST) with strict validation, secure server-side price 
+ * recalculation, and file-based persistence. Also provides a basic health check (GET).
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -6,13 +12,19 @@ import { randomUUID } from 'crypto';
 import { Order, CustomerInfo, CartItem } from '@/lib/types';
 import { generateOrderNumber, calculateCartTotals, getPizzaById, calculateItemPrice } from '@/lib/utils';
 import { trackPerformance, trackPerformanceSync, PERFORMANCE_THRESHOLDS } from '@/lib/performance';
+import { z } from 'zod';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'orders');
-const MAX_ITEMS = 50; // Prevent cart spam
-const MAX_STRING_LENGTH = 500; // Prevent excessively long inputs
+const MAX_ITEMS = 50; // Prevent cart spam denial-of-service
+const MAX_STRING_LENGTH = 500; // Prevent excessively long inputs that consume memory
 
-// Ensure data directory exists (initialized once)
+// Global state to ensure the data directory is only checked/created once per server lifecycle
 let dirInitialized = false;
+
+/**
+ * Ensures that the local directory for storing JSON orders exists.
+ * Creates the directory recursively if it doesn't.
+ */
 async function ensureDataDir() {
   if (!dirInitialized) {
     if (!existsSync(DATA_DIR)) {
@@ -22,54 +34,63 @@ async function ensureDataDir() {
   }
 }
 
-// Validate and sanitize customer info
+/**
+ * Zod schema for strict validation of customer checkout information.
+ * Enforces types, required fields, formatting (email/phone), and maximum lengths.
+ */
+const customerInfoSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  email: z.string().trim().email('Invalid email format').toLowerCase().max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  phone: z.string().trim().regex(/^[\d\s\-\(\)\+]+$/, 'Invalid phone format').max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  address: z.string().trim().min(1, 'All required fields must be filled').max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  city: z.string().trim().min(1, 'All required fields must be filled').max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  zipCode: z.string().trim().min(1, 'All required fields must be filled').max(MAX_STRING_LENGTH, 'Input fields are too long'),
+  deliveryInstructions: z.string().trim().max(MAX_STRING_LENGTH, 'Input fields are too long').optional().nullable().transform(v => v || undefined),
+});
+
+/**
+ * Validates and sanitizes incoming customer information using Zod.
+ * Also performs basic XSS sanitization (stripping `<` and `>`).
+ * 
+ * @param info - The raw, untrusted customer object from the request body
+ * @returns An object indicating validity, an error message (if invalid), and the sanitized data
+ */
 function validateCustomerInfo(info: any): { valid: boolean; error?: string; sanitized?: CustomerInfo } {
-  if (!info || typeof info !== 'object') {
+  try {
+    // 1 & 2 & 3: Strict typing, comprehensive length checks, and Zod library
+    const parsed = customerInfoSchema.parse(info);
+
+    // Basic XSS sanitization helper to strip HTML tags
+    const sanitize = (str: string) => str.replace(/[<>]/g, '');
+
+    return {
+      valid: true,
+      sanitized: {
+        name: sanitize(parsed.name),
+        email: sanitize(parsed.email),
+        phone: sanitize(parsed.phone),
+        address: sanitize(parsed.address),
+        city: sanitize(parsed.city),
+        zipCode: sanitize(parsed.zipCode),
+        deliveryInstructions: parsed.deliveryInstructions ? sanitize(parsed.deliveryInstructions) : undefined,
+      },
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { valid: false, error: error.issues[0]?.message || 'Invalid customer info' };
+    }
     return { valid: false, error: 'Customer information is required' };
   }
-
-  const { name, email, phone, address, city, zipCode, deliveryInstructions } = info;
-
-  // Required fields
-  if (!name?.trim() || !email?.trim() || !phone?.trim() || !address?.trim() || !city?.trim() || !zipCode?.trim()) {
-    return { valid: false, error: 'All required fields must be filled' };
-  }
-
-  // Length validation
-  if (name.length > MAX_STRING_LENGTH || address.length > MAX_STRING_LENGTH) {
-    return { valid: false, error: 'Input fields are too long' };
-  }
-
-  // Email format validation (basic)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { valid: false, error: 'Invalid email format' };
-  }
-
-  // Phone format validation (basic - allows various formats)
-  const phoneRegex = /^[\d\s\-\(\)\+]+$/;
-  if (!phoneRegex.test(phone)) {
-    return { valid: false, error: 'Invalid phone format' };
-  }
-
-  // Sanitize strings (remove potential XSS)
-  const sanitize = (str: string) => str.trim().replace(/[<>]/g, '');
-
-  return {
-    valid: true,
-    sanitized: {
-      name: sanitize(name),
-      email: sanitize(email.toLowerCase()),
-      phone: sanitize(phone),
-      address: sanitize(address),
-      city: sanitize(city),
-      zipCode: sanitize(zipCode),
-      deliveryInstructions: deliveryInstructions ? sanitize(deliveryInstructions).substring(0, MAX_STRING_LENGTH) : undefined,
-    },
-  };
 }
 
-// Validate and recalculate cart items server-side (NEVER trust client prices!)
+/**
+ * Validates cart items and recalculates prices on the server.
+ * SECURITY: Never trust client-provided pricing data. This method looks up base
+ * prices from the server and recalculates exact totals to prevent tampering.
+ * 
+ * @param items - The array of cart items from the request payload
+ * @returns Validation status, error string, and deeply verified/recalculated CartItem array
+ */
 function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: string; recalculated?: CartItem[] } {
   if (!Array.isArray(items) || items.length === 0) {
     return { valid: false, error: 'Cart is empty' };
@@ -84,24 +105,24 @@ function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: st
   for (const item of items) {
     const { pizzaId, size, selectedToppings = [], quantity } = item;
 
-    // Validate required fields
+    // Validate required fields and reasonable quantities
     if (!pizzaId || !size || !quantity || quantity < 1 || quantity > 20) {
       return { valid: false, error: 'Invalid cart item data' };
     }
 
-    // Verify pizza exists in menu
+    // Verify pizza actually exists in our menu database
     const pizza = getPizzaById(pizzaId);
     if (!pizza) {
       return { valid: false, error: `Pizza ${pizzaId} not found in menu` };
     }
 
-    // Verify size exists for this pizza
+    // Verify the requested size exists for this specific pizza type
     const sizeConfig = pizza.sizes.find(s => s.size === size);
     if (!sizeConfig) {
       return { valid: false, error: `Invalid size ${size} for pizza ${pizzaId}` };
     }
 
-    // Recalculate price server-side (security critical!)
+    // Securely recalculate the total price using our trusted server-side menu data
     const totalPrice = calculateItemPrice(
       pizza.basePrice,
       size,
@@ -117,7 +138,7 @@ function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: st
       size,
       basePrice: pizza.basePrice,
       selectedToppings,
-      quantity: Math.floor(quantity),
+      quantity: Math.floor(quantity), // Guard against fractional quantities
       totalPrice: Number(totalPrice.toFixed(2)),
     });
   }
@@ -125,15 +146,19 @@ function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: st
   return { valid: true, recalculated };
 }
 
+/**
+ * Handles POST requests to create a new pizza order.
+ * Expects a JSON payload containing `customerInfo` and `items`.
+ */
 export async function POST(request: NextRequest) {
   return trackPerformance(
     'API:POST:/api/orders',
     async () => {
       try {
-        // Parse request body with size limit check
+        // Parse request body
         const body = await request.json();
 
-        // Validate customer info
+        // 1. Validate customer information
         const customerValidation = trackPerformanceSync(
           'validateCustomerInfo',
           () => validateCustomerInfo(body.customerInfo),
@@ -150,7 +175,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate and recalculate cart items (never trust client prices!)
+    // 2. Validate and reliably recalculate cart item prices
     const itemsValidation = trackPerformanceSync(
       'validateAndRecalculateItems',
       () => validateAndRecalculateItems(body.items),
@@ -170,10 +195,10 @@ export async function POST(request: NextRequest) {
     const customerInfo = customerValidation.sanitized!;
     const items = itemsValidation.recalculated!;
 
-    // Recalculate totals server-side
+    // 3. Recalculate final totals server-side (taxes, fees, subtotal)
     const totals = calculateCartTotals(items);
 
-    // Create order with secure UUID
+    // 4. Construct final order object natively
     const order: Order = {
       id: `order-${randomUUID()}`,
       orderNumber: generateOrderNumber(),
@@ -184,10 +209,10 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    // Ensure directory exists (cached after first call)
+    // 5. Ensure storage directory exists
     await ensureDataDir();
 
-    // Save order to file
+    // 6. Write final order to file system identically wrapped in performance trackers
     const orderFilePath = path.join(DATA_DIR, `${order.id}.json`);
     await trackPerformance(
       'writeOrderFile',
@@ -201,7 +226,7 @@ export async function POST(request: NextRequest) {
       data: order,
     });
   } catch (error) {
-    // Log error securely (avoid exposing sensitive details)
+    // Log error securely (avoid exposing sensitive details to the client)
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         {
@@ -227,6 +252,10 @@ export async function POST(request: NextRequest) {
   );
 }
 
+/**
+ * Handles GET requests to check order API availability.
+ * Current implementation serves as a basic health-check endpoint.
+ */
 export async function GET() {
   return trackPerformance(
     'API:GET:/api/orders',

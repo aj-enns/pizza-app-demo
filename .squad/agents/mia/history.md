@@ -23,4 +23,14 @@
 - **Moderate:** ThemeToggle `aria-label` is static ("Toggle theme") — should be dynamic per current state
 - **Moderate:** Hero section primary-100 text on primary-600+ gradient may fail 4.5:1 contrast for normal text
 - **Good:** Form labels, alt text on images, semantic landmarks, heading hierarchy, CartItem button aria-labels all pass
+
+### Build Your Own Pizza Feature (2026-04-29)
+- Built `app/build-your-own/page.tsx` (Client Component) with hero + PizzaBuilder
+- Built `components/PizzaBuilder.tsx` — full pizza customization: size → sauce → toppings → price preview → add to cart
+- Used `Set<string>` for topping multi-select state (cleaner than array toggle)
+- Price preview is sticky on desktop (`lg:sticky lg:top-24`) for always-visible running total
+- Reused PizzaCard's selected-button styling pattern (border-2, primary colors)
+- Sauce selector is single-select (one base), toppings are multi-select with checkmark indicator
+- Added "Build Your Own" nav link in Header between Menu and cart icon
+- Depends on Brian's data model: `custom` pizza entry in menu.json with `basePrice: 9.99`
 - Full audit written to `.squad/decisions/inbox/mia-wcag-audit.md`

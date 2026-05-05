@@ -1,0 +1,153 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/squad-*.yml'
+      - '.github/workflows/sync-squad-labels.yml'
+  workflow_dispatch:
+
+# Required for OIDC federated credential login to Azure
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  # ---- Override these as needed (repo Variables preferred) ----
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'pizza-app-rg' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  ACR_NAME: ${{ vars.ACR_NAME || 'pizzaappacr' }}
+  CONTAINER_APP_NAME: ${{ vars.CONTAINER_APP_NAME || 'pizza-app' }}
+  CONTAINER_APP_ENV: ${{ vars.CONTAINER_APP_ENV || 'pizza-app-env' }}
+  IMAGE_NAME: pizza-app
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npx jest --ci
+
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure resource group
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: Ensure Azure Container Registry
+        run: |
+          if ! az acr show --name "$ACR_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az acr create \
+              --name "$ACR_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --sku Basic \
+              --admin-enabled false \
+              --output none
+          fi
+
+      - name: ACR login
+        run: az acr login --name "$ACR_NAME"
+
+      - name: Build and push image
+        run: |
+          IMAGE_TAG="${{ steps.version.outputs.version }}-${GITHUB_SHA::7}"
+          FULL_IMAGE="$ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG"
+          docker build -t "$FULL_IMAGE" -t "$ACR_NAME.azurecr.io/$IMAGE_NAME:latest" .
+          docker push "$FULL_IMAGE"
+          docker push "$ACR_NAME.azurecr.io/$IMAGE_NAME:latest"
+          echo "FULL_IMAGE=$FULL_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Ensure Container Apps environment
+        run: |
+          if ! az containerapp env show --name "$CONTAINER_APP_ENV" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp env create \
+              --name "$CONTAINER_APP_ENV" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --location "$AZURE_LOCATION" \
+              --output none
+          fi
+
+      - name: Deploy Container App
+        run: |
+          if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --image "$FULL_IMAGE" \
+              --output none
+          else
+            az containerapp create \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --environment "$CONTAINER_APP_ENV" \
+              --image "$FULL_IMAGE" \
+              --target-port 3000 \
+              --ingress external \
+              --registry-server "$ACR_NAME.azurecr.io" \
+              --registry-identity system \
+              --system-assigned \
+              --min-replicas 1 \
+              --max-replicas 3 \
+              --cpu 0.5 \
+              --memory 1.0Gi \
+              --env-vars NODE_ENV=production APP_VERSION=${{ steps.version.outputs.version }} \
+              --output none
+          fi
+
+      - name: Grant AcrPull to Container App identity (first deploy only)
+        run: |
+          PRINCIPAL_ID=$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query identity.principalId -o tsv)
+          ACR_ID=$(az acr show --name "$ACR_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --query id -o tsv)
+          if [ -n "$PRINCIPAL_ID" ]; then
+            az role assignment create \
+              --assignee "$PRINCIPAL_ID" \
+              --role AcrPull \
+              --scope "$ACR_ID" \
+              --output none || true
+          fi
+
+      - name: Show app URL
+        run: |
+          FQDN=$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "App URL: https://$FQDN"
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: \`$FULL_IMAGE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: https://$FQDN" >> "$GITHUB_STEP_SUMMARY"

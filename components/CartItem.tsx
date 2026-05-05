@@ -12,9 +12,16 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
+  // Get the selected cheese
+  const selectedCheese = item.selectedToppings.find(toppingId => {
+    const topping = getToppingById(toppingId);
+    return topping && topping.category === 'cheese';
+  });
+  const cheeseTopping = selectedCheese ? getToppingById(selectedCheese) : null;
+
   const extraToppings = item.selectedToppings.filter(toppingId => {
     const topping = getToppingById(toppingId);
-    return topping && topping.price > 0;
+    return topping && topping.price > 0 && topping.category !== 'cheese';
   });
 
   return (
@@ -25,6 +32,14 @@ export default function CartItem({ item }: CartItemProps) {
             <div>
               <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.pizzaName}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{SIZE_LABELS[item.size]}</p>
+              {cheeseTopping && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Cheese: {cheeseTopping.name}
+                  {cheeseTopping.price > 0 && (
+                    <span className="text-primary-600 dark:text-primary-500 font-medium"> (+{formatPrice(cheeseTopping.price)})</span>
+                  )}
+                </p>
+              )}
             </div>
             <button
               onClick={() => removeItem(item.id)}
