@@ -8,6 +8,8 @@ import ThemeToggle from './ThemeToggle';
 export default function Header() {
   const { itemCount } = useCart();
 
+
+  
   return (
     <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-4 py-4">
