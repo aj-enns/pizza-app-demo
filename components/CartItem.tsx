@@ -1,7 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CartItem as CartItemType } from '@/lib/types';
-import { formatPrice, SIZE_LABELS, getToppingById } from '@/lib/utils';
+import { formatPrice, SIZE_LABELS, getToppingById, getCrustById } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, X } from 'lucide-react';
 
@@ -12,17 +13,58 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  // Get the selected cheese
+  // Selected cheese (for regular pizzas with cheese selection)
   const selectedCheese = item.selectedToppings.find(toppingId => {
     const topping = getToppingById(toppingId);
     return topping && topping.category === 'cheese';
   });
   const cheeseTopping = selectedCheese ? getToppingById(selectedCheese) : null;
 
-  const extraToppings = item.selectedToppings.filter(toppingId => {
-    const topping = getToppingById(toppingId);
-    return topping && topping.price > 0 && topping.category !== 'cheese';
-  });
+  // Memoized custom-topping groups (for custom-built pizzas)
+  const toppingGroups = useMemo(() => {
+    if (!item.customToppings || item.customToppings.length === 0) return null;
+
+    const groups: Record<'full' | 'left' | 'right', string[]> = {
+      full: [],
+      left: [],
+      right: [],
+    };
+
+    for (const topping of item.customToppings) {
+      const name = getToppingById(topping.toppingId)?.name;
+      if (name) {
+        groups[topping.placement].push(name);
+      }
+    }
+
+    return groups;
+  }, [item.customToppings]);
+
+  const renderCustomToppings = () => {
+    if (!toppingGroups) return null;
+
+    return (
+      <div className="mb-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+        {toppingGroups.full.length > 0 && (
+          <p>Whole: {toppingGroups.full.join(', ')}</p>
+        )}
+        {toppingGroups.left.length > 0 && (
+          <p>Left Half: {toppingGroups.left.join(', ')}</p>
+        )}
+        {toppingGroups.right.length > 0 && (
+          <p>Right Half: {toppingGroups.right.join(', ')}</p>
+        )}
+      </div>
+    );
+  };
+
+  // For regular pizzas, show extra toppings (excluding cheese, shown separately)
+  const extraToppings = !item.isCustom
+    ? item.selectedToppings.filter(toppingId => {
+        const topping = getToppingById(toppingId);
+        return topping && topping.price > 0 && topping.category !== 'cheese';
+      })
+    : [];
 
   return (
     <div className="card p-4 mb-4 animate-slide-up">
@@ -30,9 +72,21 @@ export default function CartItem({ item }: CartItemProps) {
         <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.pizzaName}</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                {item.pizzaName}
+                {item.isCustom && (
+                  <span className="ml-2 text-xs font-normal bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded">
+                    Custom
+                  </span>
+                )}
+              </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{SIZE_LABELS[item.size]}</p>
-              {cheeseTopping && (
+              {item.customCrust && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {getCrustById(item.customCrust)?.name}
+                </p>
+              )}
+              {!item.isCustom && cheeseTopping && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Cheese: {cheeseTopping.name}
                   {cheeseTopping.price > 0 && (
@@ -49,15 +103,17 @@ export default function CartItem({ item }: CartItemProps) {
               <X size={20} />
             </button>
           </div>
-          
-          {extraToppings.length > 0 && (
-            <div className="mb-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
-              </p>
-            </div>
+
+          {item.isCustom ? renderCustomToppings() : (
+            extraToppings.length > 0 && (
+              <div className="mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Extra: {extraToppings.map(id => getToppingById(id)?.name).join(', ')}
+                </p>
+              </div>
+            )
           )}
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -76,7 +132,7 @@ export default function CartItem({ item }: CartItemProps) {
                 <Plus size={16} />
               </button>
             </div>
-            
+
             <div className="text-right">
               <p className="text-lg font-bold text-primary-600 dark:text-primary-500">
                 {formatPrice(item.totalPrice * item.quantity)}
