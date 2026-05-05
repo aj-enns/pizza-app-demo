@@ -177,6 +177,7 @@ export async function POST(request: NextRequest) {
     const order: Order = {
       id: `order-${randomUUID()}`,
       orderNumber: generateOrderNumber(),
+      userId: body.userId, // Optional - from logged-in users
       customerInfo,
       items,
       ...totals,

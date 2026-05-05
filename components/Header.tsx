@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
-import { ShoppingCart, Pizza } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ShoppingCart, Pizza, User } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const { itemCount } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
 
   
@@ -23,6 +25,18 @@ export default function Header() {
             <Link href="/menu" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
               Menu
             </Link>
+            
+            {isAuthenticated && user ? (
+              <Link href="/profile" className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
+                <User size={20} />
+                <span className="hidden md:inline">{user.name}</span>
+              </Link>
+            ) : (
+              <Link href="/login" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
+                Login
+              </Link>
+            )}
+            
             <Link href="/cart" className="relative flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-500 font-semibold transition-colors">
               <ShoppingCart size={24} />
               {itemCount > 0 && (
