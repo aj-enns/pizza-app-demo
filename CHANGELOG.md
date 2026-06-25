@@ -8,9 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Redesigned homepage hero call-to-action with a rating social-proof badge,
+  trust signals (delivery time, free delivery, premium ingredients), and a
+  secondary "Build Your Own" action
 - Versioning and changelog tracking system
 - Changelog page accessible at `/changelog`
 - Version display in footer
+- Structured application logger (`lib/logger.ts`) with log levels, `LOG_LEVEL`
+  environment control, and JSON output in production for log aggregation
+- Request correlation IDs on order API routes, echoed via the `x-request-id`
+  response header for end-to-end tracing
+
+### Changed
+- Homepage hero and bottom call-to-action copy rewritten to be more compelling
+  and conversion-focused
+- Order API routes and the cart/checkout flows now emit structured logs via the
+  shared logger instead of ad-hoc `console.*` calls
+- Performance metrics are now routed through the structured logger
 
 ## [0.1.0] - 2025-01-01
 

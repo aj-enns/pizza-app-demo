@@ -12,6 +12,12 @@ interface MenuData {
 // Type-safe menu data
 const typedMenuData = menuData as unknown as MenuData;
 
+// Indexed lookups built once at module load — O(1) access instead of Array.find per call.
+// Menu data is static (imported from JSON), so these maps never need invalidation.
+const pizzaById = new Map<string, Pizza>(typedMenuData.pizzas.map(p => [p.id, p]));
+const toppingById = new Map<string, Topping>(typedMenuData.toppings.map(t => [t.id, t]));
+const crustById = new Map<string, Crust>(typedMenuData.crusts.map(c => [c.id, c]));
+
 // Get all pizzas
 export function getPizzas(): Pizza[] {
   return trackPerformanceSync(
@@ -29,7 +35,7 @@ export function getMenuPizzas(): Pizza[] {
 
 // Get pizza by ID
 export function getPizzaById(id: string): Pizza | undefined {
-  return typedMenuData.pizzas.find(pizza => pizza.id === id);
+  return pizzaById.get(id);
 }
 
 // Get all toppings
@@ -39,7 +45,7 @@ export function getToppings(): Topping[] {
 
 // Get topping by ID
 export function getToppingById(id: string): Topping | undefined {
-  return typedMenuData.toppings.find(topping => topping.id === id);
+  return toppingById.get(id);
 }
 
 // Get all crusts
@@ -49,7 +55,7 @@ export function getCrusts(): Crust[] {
 
 // Get crust by ID
 export function getCrustById(id: string): Crust | undefined {
-  return typedMenuData.crusts.find(crust => crust.id === id);
+  return crustById.get(id);
 }
 
 // Size labels for display
@@ -72,14 +78,18 @@ export function calculateItemPrice(
     'calculateItemPrice',
     () => {
       const sizedPrice = basePrice * sizeMultiplier;
-      
-      // Calculate extra toppings cost (toppings not included by default)
-      const extraToppings = toppings.filter(t => !defaultToppings.includes(t));
-      const toppingsPrice = extraToppings.reduce((sum, toppingId) => {
-        const topping = getToppingById(toppingId);
-        return sum + (topping?.price || 0);
-      }, 0);
-      
+
+      // Sum extra-topping prices in a single pass.
+      // Set lookup is O(1) vs Array.includes O(n); Map lookup avoids per-topping Array.find.
+      const defaults = defaultToppings.length > 0 ? new Set(defaultToppings) : null;
+      let toppingsPrice = 0;
+      for (let i = 0; i < toppings.length; i++) {
+        const id = toppings[i];
+        if (defaults?.has(id)) continue;
+        const topping = toppingById.get(id);
+        if (topping) toppingsPrice += topping.price;
+      }
+
       return sizedPrice + toppingsPrice;
     },
     PERFORMANCE_THRESHOLDS.CALCULATION,
@@ -104,10 +114,11 @@ export function calculateCustomItemPrice(
       // Calculate custom toppings cost
       let toppingsPrice = 0;
       const toppingCounts = new Map<string, { full: number; half: number }>();
-      
+      const defaults = defaultToppings.length > 0 ? new Set(defaultToppings) : null;
+
       // Count toppings by placement
       customToppings.forEach(({ toppingId, placement }) => {
-        if (!defaultToppings.includes(toppingId)) {
+        if (!defaults?.has(toppingId)) {
           const current = toppingCounts.get(toppingId) || { full: 0, half: 0 };
           if (placement === 'full') {
             current.full += 1;

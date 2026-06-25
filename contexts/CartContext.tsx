@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { CartItem, PizzaSize, ToppingWithPlacement } from '@/lib/types';
 import { calculateCartTotals, calculateItemPrice, calculateCustomItemPrice, getPizzaById } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 
 interface CartState {
   items: CartItem[];
@@ -239,7 +240,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const items = JSON.parse(saved) as CartItem[];
         dispatch({ type: 'LOAD_CART', payload: items });
       } catch (error) {
-        console.error('Failed to load cart:', error);
+        logger.error('Failed to load cart from localStorage', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     }
   }, []);

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Clock, Truck, Star } from 'lucide-react';
+import { ArrowRight, Clock, Truck, Star, Pizza as PizzaIcon } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -10,20 +10,47 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="container mx-auto px-4 py-24 relative z-10">
           <div className="max-w-3xl animate-fade-in">
+            <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
+              <Star className="text-yellow-300 fill-yellow-300" size={16} />
+              Rated 4.9/5 by 10,000+ happy customers
+            </span>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Hot & Fresh Pizza<br />
               <span className="text-primary-200 dark:text-primary-300">Delivered Fast</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-primary-100 dark:text-primary-200">
-              Authentic Italian flavors made with premium ingredients. Order now and get your pizza in 30-45 minutes!
+              Authentic Italian flavors made with premium ingredients. Order in seconds and we&apos;ll have it at your door in 30 minutes &mdash; with free delivery, always.
             </p>
-            <Link 
-              href="/menu" 
-              className="inline-flex items-center gap-2 bg-white dark:bg-gray-100 text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-primary-50 dark:hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Order Now
-              <ArrowRight size={24} />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/menu"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-gray-100 text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-primary-50 dark:hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                Order Now
+                <ArrowRight size={24} />
+              </Link>
+              <Link
+                href="/build-your-own"
+                className="inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white/10 transition-all transform hover:-translate-y-1"
+              >
+                <PizzaIcon size={24} />
+                Build Your Own
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-10 text-primary-100 dark:text-primary-200">
+              <span className="inline-flex items-center gap-2 font-medium">
+                <Clock size={20} className="text-primary-200 dark:text-primary-300" />
+                30-min delivery
+              </span>
+              <span className="inline-flex items-center gap-2 font-medium">
+                <Truck size={20} className="text-primary-200 dark:text-primary-300" />
+                Free delivery, no minimum
+              </span>
+              <span className="inline-flex items-center gap-2 font-medium">
+                <Star size={20} className="text-primary-200 dark:text-primary-300" />
+                Premium ingredients
+              </span>
+            </div>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-gray-50 dark:from-gray-900 to-transparent"></div>
@@ -125,15 +152,21 @@ export default function HomePage() {
       <section className="py-20 bg-primary-600 dark:bg-primary-800 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Order?
+            Craving Pizza? Let&apos;s Fix That.
           </h2>
           <p className="text-xl mb-8 text-primary-100 dark:text-primary-200 max-w-2xl mx-auto">
-            Browse our delicious menu and get your favorite pizza delivered right to your door!
+            Hot, fresh, and at your door in 30 minutes. Order in just a few clicks &mdash; free delivery on every order, no minimum required.
           </p>
-          <Link href="/menu" className="btn-primary bg-white dark:bg-gray-100 text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-200 inline-flex items-center gap-2">
-            Start Your Order
-            <ArrowRight size={20} />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/menu" className="btn-primary bg-white dark:bg-gray-100 text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-200 inline-flex items-center justify-center gap-2">
+              Start Your Order
+              <ArrowRight size={20} />
+            </Link>
+            <Link href="/build-your-own" className="inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-all">
+              <PizzaIcon size={20} />
+              Build Your Own
+            </Link>
+          </div>
         </div>
       </section>
     </div>

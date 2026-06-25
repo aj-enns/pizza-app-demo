@@ -12,6 +12,7 @@ import { randomUUID } from 'crypto';
 import { Order, CustomerInfo, CartItem } from '@/lib/types';
 import { generateOrderNumber, calculateCartTotals, getPizzaById, calculateItemPrice } from '@/lib/utils';
 import { trackPerformance, trackPerformanceSync, PERFORMANCE_THRESHOLDS } from '@/lib/performance';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'orders');
@@ -49,30 +50,31 @@ const customerInfoSchema = z.object({
 });
 
 /**
- * Validates and sanitizes incoming customer information using Zod.
- * Also performs basic XSS sanitization (stripping `<` and `>`).
- * 
+ * Validates incoming customer information using Zod.
+ *
+ * Note: No string "sanitization" is performed here. XSS is prevented by
+ * contextual output encoding at render time (React/JSX escapes by default).
+ * Avoid introducing `dangerouslySetInnerHTML` for these fields; if HTML
+ * rendering is ever required, sanitize at the render site with a real
+ * sanitizer (e.g., DOMPurify) rather than ad-hoc character stripping.
+ *
  * @param info - The raw, untrusted customer object from the request body
- * @returns An object indicating validity, an error message (if invalid), and the sanitized data
+ * @returns An object indicating validity, an error message (if invalid), and the validated data
  */
-function validateCustomerInfo(info: any): { valid: boolean; error?: string; sanitized?: CustomerInfo } {
+function validateCustomerInfo(info: unknown): { valid: boolean; error?: string; sanitized?: CustomerInfo } {
   try {
-    // 1 & 2 & 3: Strict typing, comprehensive length checks, and Zod library
     const parsed = customerInfoSchema.parse(info);
-
-    // Basic XSS sanitization helper to strip HTML tags
-    const sanitize = (str: string) => str.replace(/[<>]/g, '');
 
     return {
       valid: true,
       sanitized: {
-        name: sanitize(parsed.name),
-        email: sanitize(parsed.email),
-        phone: sanitize(parsed.phone),
-        address: sanitize(parsed.address),
-        city: sanitize(parsed.city),
-        zipCode: sanitize(parsed.zipCode),
-        deliveryInstructions: parsed.deliveryInstructions ? sanitize(parsed.deliveryInstructions) : undefined,
+        name: parsed.name,
+        email: parsed.email,
+        phone: parsed.phone,
+        address: parsed.address,
+        city: parsed.city,
+        zipCode: parsed.zipCode,
+        deliveryInstructions: parsed.deliveryInstructions,
       },
     };
   } catch (error) {
@@ -83,64 +85,83 @@ function validateCustomerInfo(info: any): { valid: boolean; error?: string; sani
   }
 }
 
+const MAX_TOPPINGS_PER_ITEM = 20;
+
+/**
+ * Zod schema for a single incoming cart item. Validates shape, types, and bounds
+ * before any menu lookups occur, so malformed payloads are rejected cheaply.
+ */
+const cartItemInputSchema = z.object({
+  pizzaId: z.string().min(1).max(MAX_STRING_LENGTH),
+  size: z.enum(['small', 'medium', 'large', 'xlarge']),
+  selectedToppings: z.array(z.string().min(1).max(MAX_STRING_LENGTH)).max(MAX_TOPPINGS_PER_ITEM).default([]),
+  quantity: z.number().int().min(1).max(20),
+});
+
+const cartItemsInputSchema = z
+  .array(cartItemInputSchema)
+  .min(1, 'Cart is empty')
+  .max(MAX_ITEMS, `Maximum ${MAX_ITEMS} items allowed per order`);
+
 /**
  * Validates cart items and recalculates prices on the server.
  * SECURITY: Never trust client-provided pricing data. This method looks up base
  * prices from the server and recalculates exact totals to prevent tampering.
- * 
- * @param items - The array of cart items from the request payload
- * @returns Validation status, error string, and deeply verified/recalculated CartItem array
+ *
+ * Performance: pizza records are cached per call so a cart with multiple
+ * entries of the same pizza only scans the menu once. Size configs are indexed
+ * into a Map for O(1) lookup instead of repeated Array.find calls.
  */
-function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: string; recalculated?: CartItem[] } {
-  if (!Array.isArray(items) || items.length === 0) {
-    return { valid: false, error: 'Cart is empty' };
+function validateAndRecalculateItems(items: unknown): { valid: boolean; error?: string; recalculated?: CartItem[] } {
+  const parsed = cartItemsInputSchema.safeParse(items);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { valid: false, error: issue?.message || 'Invalid cart item data' };
   }
 
-  if (items.length > MAX_ITEMS) {
-    return { valid: false, error: `Maximum ${MAX_ITEMS} items allowed per order` };
-  }
+  // Cache pizza + size lookups across items in this request
+  const pizzaCache = new Map<string, { pizza: ReturnType<typeof getPizzaById>; sizes: Map<string, number> }>();
 
-  const recalculated: CartItem[] = [];
+  const recalculated: CartItem[] = new Array(parsed.data.length);
 
-  for (const item of items) {
-    const { pizzaId, size, selectedToppings = [], quantity } = item;
+  for (let i = 0; i < parsed.data.length; i++) {
+    const { pizzaId, size, selectedToppings, quantity } = parsed.data[i];
 
-    // Validate required fields and reasonable quantities
-    if (!pizzaId || !size || !quantity || quantity < 1 || quantity > 20) {
-      return { valid: false, error: 'Invalid cart item data' };
+    let cached = pizzaCache.get(pizzaId);
+    if (!cached) {
+      const pizza = getPizzaById(pizzaId);
+      if (!pizza) {
+        return { valid: false, error: `Pizza ${pizzaId} not found in menu` };
+      }
+      const sizes = new Map(pizza.sizes.map(s => [s.size, s.priceMultiplier]));
+      cached = { pizza, sizes };
+      pizzaCache.set(pizzaId, cached);
     }
 
-    // Verify pizza actually exists in our menu database
-    const pizza = getPizzaById(pizzaId);
-    if (!pizza) {
-      return { valid: false, error: `Pizza ${pizzaId} not found in menu` };
-    }
-
-    // Verify the requested size exists for this specific pizza type
-    const sizeConfig = pizza.sizes.find(s => s.size === size);
-    if (!sizeConfig) {
+    const { pizza } = cached;
+    const priceMultiplier = cached.sizes.get(size);
+    if (priceMultiplier === undefined) {
       return { valid: false, error: `Invalid size ${size} for pizza ${pizzaId}` };
     }
 
-    // Securely recalculate the total price using our trusted server-side menu data
     const totalPrice = calculateItemPrice(
-      pizza.basePrice,
+      pizza!.basePrice,
       size,
-      sizeConfig.priceMultiplier,
+      priceMultiplier,
       selectedToppings,
-      pizza.defaultToppings
+      pizza!.defaultToppings
     );
 
-    recalculated.push({
+    recalculated[i] = {
       id: randomUUID(),
       pizzaId,
-      pizzaName: pizza.name,
+      pizzaName: pizza!.name,
       size,
-      basePrice: pizza.basePrice,
+      basePrice: pizza!.basePrice,
       selectedToppings,
-      quantity: Math.floor(quantity), // Guard against fractional quantities
-      totalPrice: Number(totalPrice.toFixed(2)),
-    });
+      quantity,
+      totalPrice: Math.round(totalPrice * 100) / 100,
+    };
   }
 
   return { valid: true, recalculated };
@@ -151,6 +172,7 @@ function validateAndRecalculateItems(items: any[]): { valid: boolean; error?: st
  * Expects a JSON payload containing `customerInfo` and `items`.
  */
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id') || randomUUID();
   return trackPerformance(
     'API:POST:/api/orders',
     async () => {
@@ -163,7 +185,7 @@ export async function POST(request: NextRequest) {
           'validateCustomerInfo',
           () => validateCustomerInfo(body.customerInfo),
           PERFORMANCE_THRESHOLDS.CALCULATION,
-          { endpoint: '/api/orders' }
+          { endpoint: '/api/orders', requestId }
         );
     if (!customerValidation.valid) {
       return NextResponse.json(
@@ -180,7 +202,7 @@ export async function POST(request: NextRequest) {
       'validateAndRecalculateItems',
       () => validateAndRecalculateItems(body.items),
       PERFORMANCE_THRESHOLDS.CALCULATION,
-      { itemCount: body.items?.length || 0 }
+      { itemCount: body.items?.length || 0, requestId }
     );
     if (!itemsValidation.valid) {
       return NextResponse.json(
@@ -218,13 +240,21 @@ export async function POST(request: NextRequest) {
       'writeOrderFile',
       async () => writeFile(orderFilePath, JSON.stringify(order, null, 2), { encoding: 'utf-8' }),
       PERFORMANCE_THRESHOLDS.FILE_OPERATION,
-      { orderId: order.id }
+      { orderId: order.id, requestId }
     );
+
+    logger.info('Order created', {
+      requestId,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      itemCount: order.items.length,
+      total: order.total,
+    });
 
     return NextResponse.json({
       success: true,
       data: order,
-    });
+    }, { headers: { 'x-request-id': requestId } });
   } catch (error) {
     // Log error securely (avoid exposing sensitive details to the client)
     if (error instanceof SyntaxError) {
@@ -233,22 +263,26 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'Invalid request format',
         },
-        { status: 400 }
+        { status: 400, headers: { 'x-request-id': requestId } }
       );
     }
 
-    console.error('Order creation error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error('Order creation failed', {
+      requestId,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to create order',
       },
-      { status: 500 }
+      { status: 500, headers: { 'x-request-id': requestId } }
     );
       }
     },
     PERFORMANCE_THRESHOLDS.API_REQUEST,
-    { endpoint: '/api/orders', method: 'POST' }
+    { endpoint: '/api/orders', method: 'POST', requestId }
   );
 }
 

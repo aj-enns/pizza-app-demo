@@ -3,6 +3,8 @@
  * Tracks method execution times and identifies potential bottlenecks
  */
 
+import { logger } from './logger';
+
 export interface PerformanceMetric {
   operationName: string;
   duration: number;
@@ -130,18 +132,25 @@ class PerformanceLogger {
    */
   private logMetric(metric: PerformanceMetric): void {
     const { operationName, duration, threshold, isSlowOperation, context } = metric;
-    
+
     if (isSlowOperation) {
       const percentageOver = Math.round(((duration - threshold) / threshold) * 100);
-      console.warn(
-        `[PERFORMANCE WARNING] ${operationName} took ${duration}ms (${percentageOver}% over ${threshold}ms threshold)`,
-        context || {}
-      );
-    } else if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[PERFORMANCE] ${operationName} took ${duration}ms (under ${threshold}ms threshold)`,
-        context || {}
-      );
+      logger.warn(`${operationName} exceeded performance threshold`, {
+        kind: 'performance',
+        operationName,
+        duration,
+        threshold,
+        percentageOver,
+        ...context,
+      });
+    } else {
+      logger.debug(`${operationName} within performance threshold`, {
+        kind: 'performance',
+        operationName,
+        duration,
+        threshold,
+        ...context,
+      });
     }
   }
 

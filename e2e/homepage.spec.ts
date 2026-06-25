@@ -13,6 +13,21 @@ test.describe('Homepage', () => {
     await expect(page.getByRole('link', { name: /order now/i })).toBeVisible();
   });
 
+  test('should display the hero rating social proof badge', async ({ page }) => {
+    await expect(page.getByText(/rated 4\.9\/5 by 10,000\+ happy customers/i)).toBeVisible();
+  });
+
+  test('should display the hero trust signals', async ({ page }) => {
+    await expect(page.getByText(/30-min delivery/i)).toBeVisible();
+    await expect(page.getByText(/free delivery, no minimum/i)).toBeVisible();
+    await expect(page.getByText(/premium ingredients/i)).toBeVisible();
+  });
+
+  test('should navigate to build-your-own when hero Build Your Own CTA is clicked', async ({ page }) => {
+    await page.getByRole('link', { name: /build your own/i }).first().click();
+    await expect(page).toHaveURL('/build-your-own', { timeout: 10000 });
+  });
+
   test('should display the three feature cards', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /fast delivery/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /quality ingredients/i })).toBeVisible();

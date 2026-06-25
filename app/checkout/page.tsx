@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import CartSummary from '@/components/CartSummary';
 import { CustomerInfo } from '@/lib/types';
+import { logger } from '@/lib/logger';
 import { Loader2 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -59,7 +60,9 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
-      console.error('Order error:', err);
+      logger.error('Order submission failed', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     } finally {
       setLoading(false);
     }

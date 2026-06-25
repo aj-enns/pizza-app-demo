@@ -63,6 +63,18 @@ export default function PizzaCustomizer({ pizza, allToppings, allCrusts, onClose
     );
   }, [pizza, selectedSize, selectedCrust, selectedSauce, customToppings, sizeConfig]);
 
+  /**
+   * Toggle a topping selection for a specific placement.
+   *
+   * This treats `(toppingId, placement)` as the unique key:
+   * - If the exact pair already exists in `customToppings`, it is removed.
+   * - Otherwise, it is added.
+   *
+   * Notes:
+   * - `placement` supports whole-pizza or half-pizza selections (`'full' | 'left' | 'right'`).
+   * - A topping can be selected on both halves (left + right) which the pricing logic
+   *   later interprets as a full topping cost.
+   */
   const handleToppingClick = (toppingId: string, placement: ToppingPlacement) => {
     setCustomToppings(prev => {
       // Check if this exact topping+placement combo exists

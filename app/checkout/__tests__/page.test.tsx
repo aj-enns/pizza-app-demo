@@ -1,22 +1,24 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CheckoutPage from '../page';
-import { CartProvider } from '@/contexts/CartContext';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/contexts/CartContext';
+import type { CartItem } from '@/lib/types';
 
-// Mock useRouter
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-// Mock CartSummary
+jest.mock('@/contexts/CartContext', () => ({
+  useCart: jest.fn(),
+}));
+
 jest.mock('@/components/CartSummary', () => {
   return function MockCartSummary() {
     return <div data-testid="cart-summary">Cart Summary</div>;
   };
 });
 
-// Mock fetch
 global.fetch = jest.fn();
 
 const mockRouter = {
@@ -26,126 +28,250 @@ const mockRouter = {
   back: jest.fn(),
 };
 
-const renderWithCart = (ui: React.ReactElement) => {
-  return render(<CartProvider>{ui}</CartProvider>);
+const sampleItem: CartItem = {
+  id: 'item-1',
+  pizzaId: 'margherita',
+  pizzaName: 'Margherita',
+  size: 'medium',
+  basePrice: 12.99,
+  selectedToppings: ['mozzarella', 'tomato-sauce', 'basil'],
+  quantity: 1,
+  totalPrice: 12.99,
 };
+
+const mockClearCart = jest.fn();
+
+function setupCart(items: CartItem[]) {
+  (useCart as jest.Mock).mockReturnValue({
+    items,
+    clearCart: mockClearCart,
+    addItem: jest.fn(),
+    addCustomItem: jest.fn(),
+    removeItem: jest.fn(),
+    updateQuantity: jest.fn(),
+    subtotal: 0,
+    tax: 0,
+    deliveryFee: 0,
+    total: 0,
+    itemCount: items.length,
+  });
+}
+
+async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/full name/i), 'John Doe');
+  await user.type(screen.getByLabelText(/phone number/i), '555-123-4567');
+  await user.type(screen.getByLabelText(/email address/i), 'john@example.com');
+  await user.type(screen.getByLabelText(/street address/i), '123 Main St');
+  await user.type(screen.getByLabelText(/city/i), 'Springfield');
+  await user.type(screen.getByLabelText(/zip code/i), '12345');
+}
 
 describe('Checkout Page', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (global.fetch as jest.Mock).mockClear();
   });
 
-  it('should render checkout heading', () => {
-    renderWithCart(<CheckoutPage />);
-    // With empty cart, it redirects, so we won't see the heading
-    expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-  });
-
-  it('should render delivery information form', () => {
-    renderWithCart(<CheckoutPage />);
-    // Form won't render if cart is empty
-    expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-  });
-
-  it('should have all required form fields', () => {
-    renderWithCart(<CheckoutPage />);
-    // With empty cart, redirects to cart page
-    expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-  });
-
-  it('should render cart summary', () => {
-    renderWithCart(<CheckoutPage />);
-    // Cart summary won't show if cart is empty
-    expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-  });
-
-  it('should redirect to cart page when cart is empty', () => {
-    renderWithCart(<CheckoutPage />);
-    expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-  });
-
-  describe('Form Validation', () => {
-    it('should require name field', () => {
-      renderWithCart(<CheckoutPage />);
-      // Form validation happens on submit
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should require email field', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should require phone field', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should require address field', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should require city field', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should require zip code field', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
-    });
-
-    it('should not require delivery instructions', () => {
-      renderWithCart(<CheckoutPage />);
+  describe('Empty cart redirect', () => {
+    it('should redirect to /cart when cart is empty', () => {
+      setupCart([]);
+      render(<CheckoutPage />);
       expect(mockRouter.push).toHaveBeenCalledWith('/cart');
     });
   });
 
-  describe('Form Submission', () => {
-    it('should handle successful order submission', async () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+  describe('Form rendering with items', () => {
+    beforeEach(() => {
+      setupCart([sampleItem]);
     });
 
-    it('should display error message on failed submission', async () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should render the checkout heading', () => {
+      render(<CheckoutPage />);
+      expect(screen.getByRole('heading', { name: /checkout/i })).toBeInTheDocument();
     });
 
-    it('should show loading state during submission', async () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should render all required form fields', () => {
+      render(<CheckoutPage />);
+      expect(screen.getByLabelText(/full name/i)).toBeRequired();
+      expect(screen.getByLabelText(/phone number/i)).toBeRequired();
+      expect(screen.getByLabelText(/email address/i)).toBeRequired();
+      expect(screen.getByLabelText(/street address/i)).toBeRequired();
+      expect(screen.getByLabelText(/city/i)).toBeRequired();
+      expect(screen.getByLabelText(/zip code/i)).toBeRequired();
     });
 
-    it('should clear cart after successful order', async () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should render delivery instructions as optional', () => {
+      render(<CheckoutPage />);
+      expect(screen.getByLabelText(/delivery instructions/i)).not.toBeRequired();
     });
 
-    it('should redirect to order confirmation after success', async () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should render the cart summary sidebar', () => {
+      render(<CheckoutPage />);
+      expect(screen.getByTestId('cart-summary')).toBeInTheDocument();
+    });
+
+    it('should render the place order button', () => {
+      render(<CheckoutPage />);
+      expect(screen.getByRole('button', { name: /place order/i })).toBeEnabled();
+    });
+
+    it('should not redirect when cart has items', () => {
+      render(<CheckoutPage />);
+      expect(mockRouter.push).not.toHaveBeenCalled();
     });
   });
 
-  describe('Layout', () => {
-    it('should have responsive grid layout', () => {
-      renderWithCart(<CheckoutPage />);
-      // With empty cart, redirect happens via useEffect
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+  describe('Form input handling', () => {
+    beforeEach(() => {
+      setupCart([sampleItem]);
     });
 
-    it('should render form in main column', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should update field values as user types', async () => {
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      const nameInput = screen.getByLabelText(/full name/i) as HTMLInputElement;
+      await user.type(nameInput, 'Jane Smith');
+      expect(nameInput.value).toBe('Jane Smith');
+    });
+  });
+
+  describe('Successful submission', () => {
+    beforeEach(() => {
+      setupCart([sampleItem]);
+      (global.fetch as jest.Mock).mockResolvedValue({
+        json: async () => ({
+          success: true,
+          data: { id: 'order-abc-123', orderNumber: 'PZ-99999' },
+        }),
+      });
     });
 
-    it('should render summary in sidebar', () => {
-      renderWithCart(<CheckoutPage />);
-      expect(mockRouter.push).toHaveBeenCalledWith('/cart');
+    it('should POST order to /api/orders with form data and cart items', async () => {
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          '/api/orders',
+          expect.objectContaining({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+        );
+      });
+
+      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.customerInfo.name).toBe('John Doe');
+      expect(body.customerInfo.email).toBe('john@example.com');
+      expect(body.items).toEqual([sampleItem]);
+    });
+
+    it('should clear cart and redirect to confirmation on success', async () => {
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(mockClearCart).toHaveBeenCalled();
+        expect(mockRouter.push).toHaveBeenCalledWith(
+          '/order-confirmation?orderId=order-abc-123'
+        );
+      });
+    });
+  });
+
+  describe('Error handling', () => {
+    beforeEach(() => {
+      setupCart([sampleItem]);
+    });
+
+    it('should display server-provided error message when API returns success=false', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        json: async () => ({ success: false, error: 'Invalid email format' }),
+      });
+
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
+      });
+      expect(mockClearCart).not.toHaveBeenCalled();
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it('should display fallback error message when API returns no error text', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        json: async () => ({ success: false }),
+      });
+
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to place order/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should display generic error message when fetch throws', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/an error occurred/i)).toBeInTheDocument();
+      });
+      expect(mockClearCart).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+  });
+
+  describe('Loading state', () => {
+    beforeEach(() => {
+      setupCart([sampleItem]);
+    });
+
+    it('should disable button and show processing text while submitting', async () => {
+      let resolveFetch: (value: unknown) => void = () => {};
+      (global.fetch as jest.Mock).mockImplementation(
+        () =>
+          new Promise(resolve => {
+            resolveFetch = resolve;
+          })
+      );
+
+      const user = userEvent.setup();
+      render(<CheckoutPage />);
+
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole('button', { name: /place order/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /processing/i })).toBeDisabled();
+      });
+
+      resolveFetch({
+        json: async () => ({ success: true, data: { id: 'x' } }),
+      });
     });
   });
 });

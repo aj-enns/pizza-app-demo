@@ -373,7 +373,7 @@ To replace JSON file storage with a database:
 1. Update API routes in `app/api/orders/`
 2. Replace `fs` operations with database client
 3. Keep the same API response format
-4. No changes needed to frontend components
+4. No changes needed to frontend components 
 
 ## Testing
 
