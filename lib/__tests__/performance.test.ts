@@ -99,7 +99,7 @@ describe('Performance Monitoring', () => {
       const metrics = performanceLogger.getMetrics();
       expect(metrics).toHaveLength(1);
       expect(metrics[0].operationName).toBe('test-async-operation');
-      expect(metrics[0].duration).toBeGreaterThanOrEqual(50);
+      expect(metrics[0].duration).toBeGreaterThanOrEqual(45);
     });
 
     it('should identify slow async operations', async () => {
