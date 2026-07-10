@@ -15,7 +15,7 @@ afterEach(() => {
 describe('Footer', () => {
   it('should render the brand name', () => {
     render(<Footer />);
-    expect(screen.getByText('PizzaHub')).toBeInTheDocument();
+    expect(screen.getByText('Oh Dough! Pizza Co.')).toBeInTheDocument();
   });
 
   it('should render the tagline', () => {
@@ -38,14 +38,14 @@ describe('Footer', () => {
     // Contact appears as both link and heading
     expect(screen.getAllByText('Contact').length).toBe(2);
     expect(screen.getByText(/555.*123-4567/i)).toBeInTheDocument();
-    expect(screen.getByText(/info@pizzahub.com/i)).toBeInTheDocument();
+    expect(screen.getByText(/info@ohdoughpizza.com/i)).toBeInTheDocument();
     expect(screen.getByText(/123 Pizza Street/i)).toBeInTheDocument();
   });
 
   it('should display current year in copyright', () => {
     render(<Footer />);
     const currentYear = new Date().getFullYear();
-    expect(screen.getByText(new RegExp(`${currentYear}.*PizzaHub`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${currentYear}.*Oh Dough! Pizza Co\\.`))).toBeInTheDocument();
   });
 
   it('should render business hours', () => {

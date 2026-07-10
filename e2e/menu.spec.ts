@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+function getPizzaCard(page: import('@playwright/test').Page, pizzaName: string) {
+  return page.locator('.card').filter({
+    has: page.getByRole('heading', { name: pizzaName, exact: true }),
+  }).first();
+}
+
 test.describe('Menu Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/menu');
@@ -37,7 +43,7 @@ test.describe('Menu Page', () => {
 
   test('should display size selector buttons on each card', async ({ page }) => {
     // Each pizza card has size buttons; check the first card has them
-    const firstCard = page.locator('.card').first();
+    const firstCard = getPizzaCard(page, 'Margherita');
     await expect(firstCard.getByRole('button', { name: 'Small' })).toBeVisible();
     await expect(firstCard.getByRole('button', { name: 'Medium' })).toBeVisible();
     await expect(firstCard.getByRole('button', { name: 'Large', exact: true })).toBeVisible();
@@ -49,21 +55,22 @@ test.describe('Menu Page', () => {
   });
 
   test('should change price when selecting a different size', async ({ page }) => {
-    const firstCard = page.locator('.card').first();
+    const firstCard = getPizzaCard(page, 'Margherita');
+    const mainPrice = firstCard.locator('span.text-3xl.font-bold.text-primary-600.dark\\:text-primary-500');
 
     // Get default (medium) price
-    const mediumPrice = await firstCard.locator('text=/\\$\\d+\\.\\d{2}/').first().textContent();
+    const mediumPrice = await mainPrice.textContent();
 
     // Click small size
     await firstCard.getByRole('button', { name: /small/i }).click();
-    const smallPrice = await firstCard.locator('text=/\\$\\d+\\.\\d{2}/').first().textContent();
+    const smallPrice = await mainPrice.textContent();
 
     // Small should be less than medium
     expect(smallPrice).not.toBe(mediumPrice);
   });
 
   test('should add a pizza to cart and update cart badge', async ({ page }) => {
-    const firstCard = page.locator('.card').first();
+    const firstCard = getPizzaCard(page, 'Margherita');
     await firstCard.getByRole('button', { name: /add to cart/i }).click();
 
     // Button should briefly show "Added!"
@@ -75,11 +82,12 @@ test.describe('Menu Page', () => {
   });
 
   test('should add multiple pizzas and increment cart badge', async ({ page }) => {
-    const cards = page.locator('.card');
-    await cards.nth(0).getByRole('button', { name: /add to cart/i }).click();
+    const margheritaCard = getPizzaCard(page, 'Margherita');
+    const pepperoniCard = getPizzaCard(page, 'Pepperoni');
+    await margheritaCard.getByRole('button', { name: /add to cart/i }).click();
     // Wait for button to reset
-    await expect(cards.nth(0).getByRole('button', { name: /add to cart/i })).toBeVisible();
-    await cards.nth(1).getByRole('button', { name: /add to cart/i }).click();
+    await expect(margheritaCard.getByRole('button', { name: /add to cart/i })).toBeVisible();
+    await pepperoniCard.getByRole('button', { name: /add to cart/i }).click();
 
     const badge = page.locator('header span.bg-primary-600');
     await expect(badge).toHaveText('2');
@@ -88,7 +96,7 @@ test.describe('Menu Page', () => {
   // --- Negative Scenarios ---
 
   test('should disable add to cart button briefly after adding', async ({ page }) => {
-    const firstCard = page.locator('.card').first();
+    const firstCard = getPizzaCard(page, 'Margherita');
     const addButton = firstCard.getByRole('button', { name: /add to cart/i });
     await addButton.click();
 

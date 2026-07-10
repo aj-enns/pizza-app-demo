@@ -1,4 +1,4 @@
-Can you check for an email from Shreya Rugle regarding pizza? Did she have feedback for my application?
+Can you check for an email from Shreya Rugle sent today regarding pizza? Did she have feedback for my application?
 
 Can you help me implement her request?
 

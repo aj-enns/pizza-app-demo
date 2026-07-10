@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+function getPizzaCard(page: import('@playwright/test').Page, pizzaName: string) {
+  return page.locator('.card').filter({
+    has: page.getByRole('heading', { name: pizzaName, exact: true }),
+  }).first();
+}
+
 test.describe('Cart Page', () => {
   // --- Positive Scenarios ---
 
@@ -25,7 +31,7 @@ test.describe('Cart Page', () => {
   test('should display cart items after adding from menu', async ({ page }) => {
     // Add a pizza first
     await page.goto('/menu');
-    const firstCard = page.locator('.card').first();
+    const firstCard = getPizzaCard(page, 'Margherita');
     await firstCard.getByRole('button', { name: /add to cart/i }).click();
 
     // Navigate to cart
@@ -38,7 +44,7 @@ test.describe('Cart Page', () => {
 
   test('should display order summary with subtotal, tax, and delivery', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     await expect(page.getByText('Subtotal')).toBeVisible();
@@ -49,7 +55,7 @@ test.describe('Cart Page', () => {
 
   test('should update quantity when using quantity controls', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     // Increase quantity
@@ -63,7 +69,7 @@ test.describe('Cart Page', () => {
 
   test('should remove item from cart', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     // Click remove
@@ -76,7 +82,7 @@ test.describe('Cart Page', () => {
 
   test('should have Proceed to Checkout link', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     const checkoutLink = page.getByRole('link', { name: /proceed to checkout/i });
@@ -85,7 +91,7 @@ test.describe('Cart Page', () => {
 
   test('should navigate to checkout page', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     await page.getByRole('link', { name: /proceed to checkout/i }).click();
@@ -96,7 +102,7 @@ test.describe('Cart Page', () => {
 
   test('should decrease quantity but not below 1', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
     await page.goto('/cart');
 
     // Quantity is 1. Decreasing removes the item.
@@ -107,7 +113,7 @@ test.describe('Cart Page', () => {
 
   test('should persist cart across page refresh', async ({ page }) => {
     await page.goto('/menu');
-    await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+    await getPizzaCard(page, 'Margherita').getByRole('button', { name: /add to cart/i }).click();
 
     // Reload and check cart
     await page.goto('/cart');

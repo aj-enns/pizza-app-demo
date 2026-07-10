@@ -16,7 +16,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary-600 dark:text-primary-500 hover:text-primary-700 dark:hover:text-primary-400 transition-colors">
             <Pizza size={32} className="text-primary-600 dark:text-primary-500" />
-            <span>PizzaHub</span>
+            <span>Oh Dough! Pizza Co.</span>
           </Link>
           
           <div className="flex items-center gap-6">

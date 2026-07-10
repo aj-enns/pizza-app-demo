@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+function getPizzaCard(page: import('@playwright/test').Page, pizzaName: string) {
+  return page.locator('.card').filter({
+    has: page.getByRole('heading', { name: pizzaName, exact: true }),
+  }).first();
+}
+
 test.describe('Full Order Flow (E2E Happy Path)', () => {
   test('should complete an entire order from browsing to confirmation', async ({ page }) => {
     // 1. Start on homepage
@@ -11,13 +17,13 @@ test.describe('Full Order Flow (E2E Happy Path)', () => {
     await expect(page).toHaveURL('/menu');
 
     // 3. Add first pizza (Margherita) with large size
-    const firstCard = page.locator('.card').first();
-    await firstCard.getByRole('button', { name: 'Large', exact: true }).click();
+    const firstCard = getPizzaCard(page, 'Margherita');
+    await firstCard.getByRole('button', { name: /^large\b/i }).click();
     await firstCard.getByRole('button', { name: /add to cart/i }).click();
     await expect(firstCard.getByText('Added!')).toBeVisible();
 
     // 4. Add second pizza (Pepperoni) with default medium size
-    const secondCard = page.locator('.card').nth(1);
+    const secondCard = getPizzaCard(page, 'Pepperoni');
     await secondCard.getByRole('button', { name: /add to cart/i }).click();
     await expect(secondCard.getByText('Added!')).toBeVisible();
 

@@ -20,7 +20,7 @@ test.describe('Homepage', () => {
   test('should display the hero trust signals', async ({ page }) => {
     await expect(page.getByText(/30-min delivery/i)).toBeVisible();
     await expect(page.getByText(/free delivery, no minimum/i)).toBeVisible();
-    await expect(page.getByText(/premium ingredients/i)).toBeVisible();
+    await expect(page.getByText('Premium ingredients', { exact: true })).toBeVisible();
   });
 
   test('should navigate to build-your-own when hero Build Your Own CTA is clicked', async ({ page }) => {
@@ -43,13 +43,13 @@ test.describe('Homepage', () => {
     await expect(page).toHaveURL('/menu', { timeout: 10000 });
   });
 
-  test('should display header with PizzaHub branding', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /pizzahub/i })).toBeVisible();
+  test('should display header with Oh Dough! Pizza Co. branding', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /oh dough/i })).toBeVisible();
   });
 
   test('should display footer with version and changelog link', async ({ page }) => {
     const footer = page.locator('footer');
-    await expect(footer.getByText(/pizzahub/i).first()).toBeVisible();
+    await expect(footer.getByText(/oh dough/i).first()).toBeVisible();
     await expect(footer.getByRole('link', { name: /changelog/i })).toBeVisible();
   });
 

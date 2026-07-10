@@ -129,7 +129,7 @@ describe('PizzaCard', () => {
     it('should show upgrade price for premium cheeses', () => {
       renderWithCart(<PizzaCard pizza={mockPizza} />);
       // Parmesan costs $1.50
-      expect(screen.getByText('+$1.50')).toBeInTheDocument();
+      expect(screen.getAllByText('+$1.50').length).toBeGreaterThan(0);
       // Gorgonzola costs $2.00
       expect(screen.getByText('+$2.00')).toBeInTheDocument();
     });

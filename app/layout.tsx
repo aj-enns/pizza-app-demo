@@ -7,7 +7,7 @@ import ClientLayout from "@/components/ClientLayout";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PizzaHub - Order Fresh Pizza Online",
+  title: "Oh Dough! Pizza Co. - Order Fresh Pizza Online",
   description: "Order delicious pizzas online with fast delivery. Browse our menu of classic, specialty, and premium pizzas.",
 };
 

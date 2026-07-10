@@ -1,14 +1,21 @@
 import { test, expect } from '@playwright/test';
 
+function getPizzaCard(page: import('@playwright/test').Page, pizzaName: string) {
+  return page.locator('.card').filter({
+    has: page.getByRole('heading', { name: pizzaName, exact: true }),
+  }).first();
+}
+
 /**
  * Helper: adds a pizza to the cart and navigates to checkout via SPA links
  * (to avoid the race condition where checkout redirects before localStorage loads).
  */
 async function addPizzaAndGoToCheckout(page: import('@playwright/test').Page) {
   await page.goto('/menu');
-  await page.locator('.card').first().getByRole('button', { name: /add to cart/i }).click();
+  const margheritaCard = getPizzaCard(page, 'Margherita');
+  await margheritaCard.getByRole('button', { name: /add to cart/i }).click();
   // Wait for add confirmation
-  await expect(page.locator('.card').first().getByText('Added!')).toBeVisible();
+  await expect(margheritaCard.getByText('Added!')).toBeVisible();
   // Navigate to cart, wait for item to appear (proving localStorage loaded)
   await page.goto('/cart');
   await expect(page.getByText(/margherita/i)).toBeVisible();

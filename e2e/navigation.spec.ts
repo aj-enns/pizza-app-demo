@@ -16,7 +16,7 @@ test.describe('Navigation & Layout', () => {
     await expect(page).toHaveURL('/cart');
 
     // Navigate home via logo
-    await page.getByRole('link', { name: /pizzahub/i }).click();
+    await page.getByRole('link', { name: /oh dough/i }).click();
     await expect(page).toHaveURL('/');
   });
 
@@ -50,7 +50,7 @@ test.describe('Navigation & Layout', () => {
 
     const footer = page.locator('footer');
     await expect(footer.getByText(/\(555\) 123-4567/)).toBeVisible();
-    await expect(footer.getByText(/info@pizzahub.com/)).toBeVisible();
+    await expect(footer.getByText(/info@ohdoughpizza.com/)).toBeVisible();
     await expect(footer.getByText(/123 pizza street/i)).toBeVisible();
   });
 

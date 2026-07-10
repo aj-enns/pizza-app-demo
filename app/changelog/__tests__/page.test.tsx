@@ -49,7 +49,7 @@ describe('ChangelogPage', () => {
 
   it('should display the subtitle text', () => {
     render(<ChangelogPage />);
-    expect(screen.getByText('A record of all notable changes to PizzaHub')).toBeInTheDocument();
+    expect(screen.getByText('A record of all notable changes to Oh Dough! Pizza Co.')).toBeInTheDocument();
   });
 
   it('should render the Unreleased section', () => {

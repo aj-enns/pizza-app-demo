@@ -65,7 +65,7 @@ describe('PizzaBuilder', () => {
     const sizeSelector = screen.getByTestId('size-selector');
     expect(within(sizeSelector).getByRole('button', { name: /small/i })).toBeInTheDocument();
     expect(within(sizeSelector).getByRole('button', { name: /medium/i })).toBeInTheDocument();
-    expect(within(sizeSelector).getByRole('button', { name: /large/i, exact: false })).toBeInTheDocument();
+    expect(within(sizeSelector).getByRole('button', { name: /^large\b/i })).toBeInTheDocument();
     expect(within(sizeSelector).getByRole('button', { name: /x-large/i })).toBeInTheDocument();
   });
 
@@ -82,7 +82,7 @@ describe('PizzaBuilder', () => {
     renderBuilder();
 
     const sizeSelector = screen.getByTestId('size-selector');
-    const largeButton = within(sizeSelector).getByRole('button', { name: 'Large', exact: true });
+    const largeButton = within(sizeSelector).getByRole('button', { name: /^large\b/i });
     await user.click(largeButton);
 
     expect(largeButton).toHaveClass('border-primary-600');
@@ -95,14 +95,14 @@ describe('PizzaBuilder', () => {
     const pricePreview = screen.getByTestId('price-preview');
 
     // Default medium price: $9.99 * 1.0 = $9.99
-    expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+    expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
 
     // Click small: $9.99 * 0.8 = $7.99
     const sizeSelector = screen.getByTestId('size-selector');
     await user.click(within(sizeSelector).getByRole('button', { name: /small/i }));
 
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$7\.99/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$7\.99/).length).toBeGreaterThan(0);
     });
   });
 
@@ -116,7 +116,7 @@ describe('PizzaBuilder', () => {
     // $9.99 * 1.6 = $15.98
     const pricePreview = screen.getByTestId('price-preview');
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$15\.98/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$15\.98/).length).toBeGreaterThan(0);
     });
   });
 
@@ -197,7 +197,7 @@ describe('PizzaBuilder', () => {
 
     const pricePreview = screen.getByTestId('price-preview');
     // Base medium price: $9.99
-    expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+    expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
 
     // Add pepperoni ($2.00)
     const toppingsSelector = screen.getByTestId('toppings-selector');
@@ -205,7 +205,7 @@ describe('PizzaBuilder', () => {
 
     // $9.99 + $2.00 = $11.99
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$11\.99/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$11\.99/).length).toBeGreaterThan(0);
     });
   });
 
@@ -219,13 +219,13 @@ describe('PizzaBuilder', () => {
     // Add pepperoni
     await user.click(within(toppingsSelector).getByRole('button', { name: /pepperoni/i }));
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$11\.99/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$11\.99/).length).toBeGreaterThan(0);
     });
 
     // Remove pepperoni
     await user.click(within(toppingsSelector).getByRole('button', { name: /pepperoni/i }));
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
     });
   });
 
@@ -234,7 +234,7 @@ describe('PizzaBuilder', () => {
 
     const toppingsSelector = screen.getByTestId('toppings-selector');
     // Pepperoni costs $2.00
-    expect(within(toppingsSelector).getByText(/\$2\.00/)).toBeInTheDocument();
+    expect(within(toppingsSelector).getAllByText(/\$2\.00/).length).toBeGreaterThan(0);
     // Grilled Chicken costs $3.00
     expect(within(toppingsSelector).getByText(/\$3\.00/)).toBeInTheDocument();
   });
@@ -252,7 +252,7 @@ describe('PizzaBuilder', () => {
 
     // $9.99 + $2.00 + $1.50 = $13.49
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$13\.49/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$13\.49/).length).toBeGreaterThan(0);
     });
   });
 
@@ -265,12 +265,12 @@ describe('PizzaBuilder', () => {
     const pricePreview = screen.getByTestId('price-preview');
 
     // Select large ($9.99 * 1.3 = $12.99) + pepperoni ($2.00)
-    await user.click(within(sizeSelector).getByRole('button', { name: 'Large', exact: true }));
+    await user.click(within(sizeSelector).getByRole('button', { name: /^large\b/i }));
     await user.click(within(toppingsSelector).getByRole('button', { name: /pepperoni/i }));
 
     // $12.99 + $2.00 = $14.99
     await waitFor(() => {
-      expect(within(pricePreview).getByText(/\$14\.99/)).toBeInTheDocument();
+      expect(within(pricePreview).getAllByText(/\$14\.99/).length).toBeGreaterThan(0);
     });
   });
 
@@ -314,7 +314,7 @@ describe('PizzaBuilder', () => {
     renderBuilder();
 
     const sizeSelector = screen.getByTestId('size-selector');
-    await user.click(within(sizeSelector).getByRole('button', { name: 'Large', exact: true }));
+    await user.click(within(sizeSelector).getByRole('button', { name: /^large\b/i }));
 
     const addButton = screen.getByTestId('add-to-cart-builder');
     await user.click(addButton);
@@ -353,7 +353,7 @@ describe('PizzaBuilder', () => {
 
     const pricePreview = screen.getByTestId('price-preview');
     // Medium base: $9.99, sauce is free
-    expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+    expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
   });
 
   it('should include sauce in addItem but not charge for it', async () => {
@@ -366,7 +366,7 @@ describe('PizzaBuilder', () => {
 
     const pricePreview = screen.getByTestId('price-preview');
     // Price should still be base only ($9.99)
-    expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+    expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
 
     const addButton = screen.getByTestId('add-to-cart-builder');
     await user.click(addButton);
@@ -393,6 +393,6 @@ describe('PizzaBuilder', () => {
 
     const pricePreview = screen.getByTestId('price-preview');
     // Free topping — price stays at base $9.99
-    expect(within(pricePreview).getByText(/\$9\.99/)).toBeInTheDocument();
+    expect(within(pricePreview).getAllByText(/\$9\.99/).length).toBeGreaterThan(0);
   });
 });

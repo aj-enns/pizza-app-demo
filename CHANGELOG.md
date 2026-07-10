@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   response header for end-to-end tracing
 
 ### Changed
+- Rebranded the application from "PizzaHub" to "Oh Dough! Pizza Co." across the
+  header, footer, page titles, changelog, and contact email
+  (`info@ohdoughpizza.com`)
 - Homepage hero and bottom call-to-action copy rewritten to be more compelling
   and conversion-focused
 - Order API routes and the cart/checkout flows now emit structured logs via the

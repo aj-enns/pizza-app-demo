@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 env:
-  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'pizza-app-rg' }}
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-pizza-app-demo' }}
   CONTAINER_APP_NAME: ${{ vars.CONTAINER_APP_NAME || 'pizzaapp' }}
   IMAGE_NAME: pizza-app
 

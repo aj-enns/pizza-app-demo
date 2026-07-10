@@ -315,8 +315,10 @@ describe('CartContext', () => {
       
       expect(result.current.items).toHaveLength(0);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to load cart:',
-        expect.any(SyntaxError)
+        '[ERROR] Failed to load cart from localStorage',
+        expect.objectContaining({
+          message: expect.any(String),
+        })
       );
       consoleSpy.mockRestore();
     });

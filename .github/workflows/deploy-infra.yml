@@ -30,7 +30,7 @@ permissions:
   pull-requests: write
 
 env:
-  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'pizza-app-rg' }}
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-pizza-app-demo' }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
   BICEP_FILE: infra/main.bicep
   BICEP_PARAMS_FILE: infra/main.bicepparam

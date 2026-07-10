@@ -4,7 +4,8 @@ This document illustrates the complete order lifecycle in the Pizza App, from me
 
 ## High-Level Order Flow
 
-```mermaid
+```mermaid 
+%%{init: {'theme': 'dark', 'themeVariables': {'lineColor': '#cbd5e1'}}}%%
 flowchart TD
     Start([User visits site]) --> Menu[Menu Page<br/>app/menu/page.tsx]
     Menu --> PizzaCard[PizzaCard Component<br/>components/PizzaCard.tsx]
@@ -65,6 +66,7 @@ flowchart TD
 ## Sequence Diagram — Order Creation
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': {'lineColor': '#cbd5e1'}}}%%
 sequenceDiagram
     actor User
     participant Browser as Browser (Client)

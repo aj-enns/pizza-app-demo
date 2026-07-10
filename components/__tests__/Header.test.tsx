@@ -30,7 +30,7 @@ const renderWithCart = (ui: React.ReactElement) => {
 describe('Header', () => {
   it('should render the logo and brand name', () => {
     renderWithCart(<Header />);
-    expect(screen.getByText('PizzaHub')).toBeInTheDocument();
+    expect(screen.getByText('Oh Dough! Pizza Co.')).toBeInTheDocument();
   });
 
   it('should render navigation links', () => {
@@ -54,7 +54,7 @@ describe('Header', () => {
 
   it('should have correct links', () => {
     renderWithCart(<Header />);
-    const homeLink = screen.getByRole('link', { name: /pizzahub/i });
+    const homeLink = screen.getByRole('link', { name: /oh dough/i });
     const menuLink = screen.getByRole('link', { name: /menu/i });
     
     expect(homeLink).toHaveAttribute('href', '/');

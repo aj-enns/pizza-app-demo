@@ -31,7 +31,7 @@ test.describe('Build Your Own Page', () => {
   test('should show base price with no toppings selected', async ({ page }) => {
     const pricePreview = page.locator('[data-testid="price-preview"]');
     // Medium base: $9.99 * 1.0 = $9.99
-    await expect(pricePreview.getByText('$9.99')).toBeVisible();
+    await expect(pricePreview.getByText('$9.99').first()).toBeVisible();
   });
 
   // --- Size Selection ---
@@ -41,19 +41,19 @@ test.describe('Build Your Own Page', () => {
     const pricePreview = page.locator('[data-testid="price-preview"]');
 
     // Default medium: $9.99
-    await expect(pricePreview.getByText('$9.99')).toBeVisible();
+    await expect(pricePreview.getByText('$9.99').first()).toBeVisible();
 
     // Click small: $9.99 * 0.8 = $7.99
     await sizeSelector.getByRole('button', { name: /small/i }).click();
-    await expect(pricePreview.getByText('$7.99')).toBeVisible();
+    await expect(pricePreview.getByText('$7.99').first()).toBeVisible();
 
     // Click large: $9.99 * 1.3 = $12.99
-    await sizeSelector.getByRole('button', { name: 'Large', exact: true }).click();
-    await expect(pricePreview.getByText('$12.99')).toBeVisible();
+    await sizeSelector.getByRole('button', { name: /^large\b/i }).click();
+    await expect(pricePreview.getByText('$12.99').first()).toBeVisible();
 
     // Click xlarge: $9.99 * 1.6 = $15.98
     await sizeSelector.getByRole('button', { name: /x-large/i }).click();
-    await expect(pricePreview.getByText('$15.98')).toBeVisible();
+    await expect(pricePreview.getByText('$15.98').first()).toBeVisible();
   });
 
   // --- Sauce Selection ---
@@ -100,15 +100,15 @@ test.describe('Build Your Own Page', () => {
 
     // Add pepperoni ($2.00): $9.99 + $2.00 = $11.99
     await toppingsSelector.getByRole('button', { name: /pepperoni/i }).click();
-    await expect(pricePreview.getByText('$11.99')).toBeVisible();
+    await expect(pricePreview.getByText('$11.99').first()).toBeVisible();
 
     // Add mushrooms ($1.50): $9.99 + $2.00 + $1.50 = $13.49
     await toppingsSelector.getByRole('button', { name: /mushrooms/i }).click();
-    await expect(pricePreview.getByText('$13.49')).toBeVisible();
+    await expect(pricePreview.getByText('$13.49').first()).toBeVisible();
 
     // Remove pepperoni: $9.99 + $1.50 = $11.49
     await toppingsSelector.getByRole('button', { name: /pepperoni/i }).click();
-    await expect(pricePreview.getByText('$11.49')).toBeVisible();
+    await expect(pricePreview.getByText('$11.49').first()).toBeVisible();
   });
 
   test('should show correct price with multiple toppings selected', async ({ page }) => {
@@ -122,7 +122,7 @@ test.describe('Build Your Own Page', () => {
     await toppingsSelector.getByRole('button', { name: /mozzarella/i }).click();
 
     // $9.99 + $2.00 + $2.50 + $1.50 + $0 = $15.99
-    await expect(pricePreview.getByText('$15.99')).toBeVisible();
+    await expect(pricePreview.getByText('$15.99').first()).toBeVisible();
   });
 
   // --- Add to Cart ---
@@ -149,7 +149,7 @@ test.describe('Build Your Own Page', () => {
     await page.locator('header a[href="/cart"]').click();
     await page.waitForURL('/cart');
 
-    await expect(page.getByText(/build your own/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build Your Own', exact: true })).toBeVisible();
   });
 
   test('should show "Added!" confirmation and disable button temporarily', async ({ page }) => {
@@ -186,13 +186,13 @@ test.describe('Build Your Own Page', () => {
     // Navigate to cart
     await page.locator('header a[href="/cart"]').click();
     await page.waitForURL('/cart');
-    await expect(page.getByText(/build your own/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build Your Own', exact: true })).toBeVisible();
 
     // Refresh
     await page.reload();
 
     // Item should still be in cart
-    await expect(page.getByText(/build your own/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build Your Own', exact: true })).toBeVisible();
   });
 
   // --- Stress / Edge Cases ---
@@ -219,7 +219,7 @@ test.describe('Build Your Own Page', () => {
     // Vegetable: 1.50 + 1.50 + 1.00 + 1.00 + 1.50 + 1.50 + 1.50 + 1.00 + 1.00 + 0.50 = $12.00
     // Base medium: $9.99
     // Total: $9.99 + $5.00 + $14.00 + $12.00 = $40.99
-    await expect(pricePreview.getByText('$40.99')).toBeVisible();
+    await expect(pricePreview.getByText('$40.99').first()).toBeVisible();
   });
 
   test('should combine size and topping price changes correctly', async ({ page }) => {
@@ -228,17 +228,17 @@ test.describe('Build Your Own Page', () => {
     const pricePreview = page.locator('[data-testid="price-preview"]');
 
     // Select large ($9.99 * 1.3 = $12.99)
-    await sizeSelector.getByRole('button', { name: 'Large', exact: true }).click();
-    await expect(pricePreview.getByText('$12.99')).toBeVisible();
+    await sizeSelector.getByRole('button', { name: /^large\b/i }).click();
+    await expect(pricePreview.getByText('$12.99').first()).toBeVisible();
 
     // Add grilled chicken ($3.00)
     await toppingsSelector.getByRole('button', { name: /grilled chicken/i }).click();
     // $12.99 + $3.00 = $15.99
-    await expect(pricePreview.getByText('$15.99')).toBeVisible();
+    await expect(pricePreview.getByText('$15.99').first()).toBeVisible();
 
     // Change to small ($9.99 * 0.8 = $7.99 + $3.00 = $10.99)
     await sizeSelector.getByRole('button', { name: /small/i }).click();
-    await expect(pricePreview.getByText('$10.99')).toBeVisible();
+    await expect(pricePreview.getByText('$10.99').first()).toBeVisible();
   });
 });
 
@@ -250,7 +250,7 @@ test.describe('Build Your Own — Full Order Flow', () => {
 
     // 2. Select large size
     const sizeSelector = page.locator('[data-testid="size-selector"]');
-    await sizeSelector.getByRole('button', { name: 'Large', exact: true }).click();
+    await sizeSelector.getByRole('button', { name: /^large\b/i }).click();
 
     // 3. Select BBQ sauce
     const sauceSelector = page.locator('[data-testid="sauce-selector"]');
@@ -264,7 +264,7 @@ test.describe('Build Your Own — Full Order Flow', () => {
 
     // 5. Verify price: large base ($12.99) + pepperoni ($2) + bacon ($2.50) + mushrooms ($1.50) = $18.99
     const pricePreview = page.locator('[data-testid="price-preview"]');
-    await expect(pricePreview.getByText('$18.99')).toBeVisible();
+    await expect(pricePreview.getByText('$18.99').first()).toBeVisible();
 
     // 6. Add to cart
     await page.locator('[data-testid="add-to-cart-builder"]').click();
@@ -275,7 +275,7 @@ test.describe('Build Your Own — Full Order Flow', () => {
     await page.waitForURL('/cart');
 
     // 8. Verify custom pizza in cart
-    await expect(page.getByText(/build your own/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build Your Own', exact: true })).toBeVisible();
     await expect(page.getByText('Subtotal')).toBeVisible();
     await expect(page.getByText('Tax')).toBeVisible();
     await expect(page.getByText('Delivery Fee')).toBeVisible();
@@ -298,6 +298,6 @@ test.describe('Build Your Own — Full Order Flow', () => {
     // 12. Verify confirmation
     await expect(page).toHaveURL(/\/order-confirmation\?orderId=/, { timeout: 15000 });
     await expect(page.getByRole('heading', { name: /order confirmed/i })).toBeVisible();
-    await expect(page.getByText(/build your own/i)).toBeVisible();
+    await expect(page.getByRole('main').getByText('Build Your Own', { exact: true })).toBeVisible();
   });
 });

@@ -56,7 +56,7 @@ describe('logger', () => {
 
     it('suppresses debug by default outside development', () => {
       delete process.env.LOG_LEVEL;
-      process.env.NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       logger.debug('hidden by default');
       expect(logSpy).not.toHaveBeenCalled();
     });
@@ -65,7 +65,7 @@ describe('logger', () => {
   describe('output format', () => {
     it('emits a single JSON line in production', () => {
       delete process.env.LOG_LEVEL;
-      process.env.NODE_ENV = 'production';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
       logger.error('order failed', { requestId: 'req-123', orderId: 'order-1' });
 
       expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe('logger', () => {
 
     it('emits a readable prefix with context in development', () => {
       delete process.env.LOG_LEVEL;
-      process.env.NODE_ENV = 'development';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'development';
       logger.info('cart loaded', { itemCount: 3 });
 
       expect(logSpy).toHaveBeenCalledWith('[INFO] cart loaded', { itemCount: 3 });
@@ -90,7 +90,7 @@ describe('logger', () => {
 
     it('passes an empty context object when none is provided in development', () => {
       delete process.env.LOG_LEVEL;
-      process.env.NODE_ENV = 'development';
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'development';
       logger.warn('no context');
 
       expect(warnSpy).toHaveBeenCalledWith('[WARN] no context', {});

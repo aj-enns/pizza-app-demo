@@ -3,11 +3,11 @@ import PizzaCustomizer from '@/components/PizzaCustomizer';
 import { getPizzaById, getToppings, getCrusts } from '@/lib/utils';
 
 interface CustomizePageProps {
-  searchParams: { pizzaId?: string };
+  searchParams: Promise<{ pizzaId?: string }>;
 }
 
-export default function CustomizePage({ searchParams }: CustomizePageProps) {
-  const pizzaId = searchParams.pizzaId;
+export default async function CustomizePage({ searchParams }: CustomizePageProps) {
+  const { pizzaId } = await searchParams;
   
   if (!pizzaId) {
     notFound();

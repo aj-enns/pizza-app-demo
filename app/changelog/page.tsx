@@ -3,8 +3,8 @@ import { getChangelog, parseChangelog } from '@/lib/version.server';
 import { BookOpen, Tag, Calendar } from 'lucide-react';
 
 export const metadata = {
-  title: 'Changelog - PizzaHub',
-  description: 'See what\'s new in PizzaHub. View the full history of features, fixes, and improvements.',
+  title: 'Changelog - Oh Dough! Pizza Co.',
+  description: 'See what\'s new in Oh Dough! Pizza Co. View the full history of features, fixes, and improvements.',
 };
 
 const SECTION_COLORS: Record<string, string> = {
@@ -30,7 +30,7 @@ export default function ChangelogPage() {
             <h1 className="text-5xl font-bold text-gray-900 dark:text-gray-100">Changelog</h1>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            A record of all notable changes to PizzaHub
+            A record of all notable changes to Oh Dough! Pizza Co.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-4 py-2 rounded-full text-sm font-medium">
             <Tag className="w-4 h-4" />
