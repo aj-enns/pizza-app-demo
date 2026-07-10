@@ -95,6 +95,48 @@ jobs:
           docker push "${{ steps.acr.outputs.server }}/$IMAGE_NAME:latest"
           echo "ref=$FULL_IMAGE" >> "$GITHUB_OUTPUT"
 
+      - name: Ensure Container App can pull from ACR
+        run: |
+          PRINCIPAL_ID=$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query identity.principalId -o tsv)
+
+          if [ -z "$PRINCIPAL_ID" ] || [ "$PRINCIPAL_ID" = "null" ]; then
+            echo "::error::Container App system-assigned identity is missing."
+            exit 1
+          fi
+
+          ACR_ID=$(az acr show \
+            --name "${{ steps.acr.outputs.name }}" \
+            --query id -o tsv)
+
+          ACR_PULL_ROLE_ID=$(az role definition list \
+            --name AcrPull \
+            --query "[0].id" -o tsv)
+
+          EXISTING_ASSIGNMENT=$(az role assignment list \
+            --assignee-object-id "$PRINCIPAL_ID" \
+            --scope "$ACR_ID" \
+            --role "$ACR_PULL_ROLE_ID" \
+            --query "[0].id" -o tsv)
+
+          if [ -z "$EXISTING_ASSIGNMENT" ]; then
+            az role assignment create \
+              --assignee-object-id "$PRINCIPAL_ID" \
+              --assignee-principal-type ServicePrincipal \
+              --role "$ACR_PULL_ROLE_ID" \
+              --scope "$ACR_ID" \
+              --output none
+          fi
+
+          az containerapp registry set \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --server "${{ steps.acr.outputs.server }}" \
+            --identity system \
+            --output none
+
       - name: Update Container App image
         run: |
           az containerapp update \
