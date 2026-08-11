@@ -1,5 +1,5 @@
 // Pizza App - Azure Container Apps platform
-// Deploys: Log Analytics, Application Insights, Container Registry, Container Apps Environment, user-assigned identity, AcrPull.
+// Deploys: Log Analytics, Application Insights, availability monitoring, Container Registry, Container Apps Environment, user-assigned identity, AcrPull.
 // The container app itself is deployed separately by the app workflow via infra/app.bicep.
 // Targets: resource group scope
 
@@ -24,6 +24,8 @@ var acrName = toLower('${appName}acr${uniqueString(resourceGroup().id)}')
 var environmentName = '${appName}-env'
 var logAnalyticsName = '${appName}-logs'
 var applicationInsightsName = '${appName}-insights'
+var availabilityTestName = '${appName}-availability'
+var availabilityAlertName = '${appName}-availability-alert'
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
@@ -72,6 +74,71 @@ resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
         sharedKey: logAnalytics.listKeys().primarySharedKey
       }
     }
+  }
+}
+
+resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
+  name: availabilityTestName
+  location: location
+  tags: union(tags, {
+    'hidden-link:${applicationInsights.id}': 'Resource'
+  })
+  kind: 'standard'
+  properties: {
+    Name: availabilityTestName
+    SyntheticMonitorId: availabilityTestName
+    Kind: 'standard'
+    Enabled: true
+    Frequency: 300
+    Timeout: 30
+    RetryEnabled: true
+    Locations: [
+      {
+        Id: 'us-va-ash-azr'
+      }
+    ]
+    Request: {
+      RequestUrl: 'https://${appName}.${containerAppsEnv.properties.defaultDomain}/api/menu'
+      HttpVerb: 'GET'
+      FollowRedirects: true
+      ParseDependentRequests: false
+    }
+    ValidationRules: {
+      ExpectedHttpStatusCode: 200
+      IgnoreHttpStatusCode: false
+      SSLCheck: true
+      SSLCertRemainingLifetimeCheck: 7
+    }
+  }
+}
+
+resource availabilityAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: availabilityAlertName
+  location: 'global'
+  tags: union(tags, {
+    'hidden-link:${applicationInsights.id}': 'Resource'
+    'hidden-link:${availabilityTest.id}': 'Resource'
+  })
+  properties: {
+    description: 'Alerts when the Pizza App availability test fails.'
+    severity: 2
+    enabled: true
+    scopes: [
+      availabilityTest.id
+      applicationInsights.id
+    ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    autoMitigate: true
+    targetResourceType: 'Microsoft.Insights/webtests'
+    targetResourceRegion: location
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
+      componentId: applicationInsights.id
+      webTestId: availabilityTest.id
+      failedLocationCount: 1
+    }
+    actions: []
   }
 }
 

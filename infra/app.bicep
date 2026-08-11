@@ -1,4 +1,4 @@
-// Pizza App - Container App and availability test
+// Pizza App - Container App
 // Owned and deployed by the application CD workflow with the freshly built image.
 // References platform resources (environment, registry, identity, App Insights) from main.bicep.
 
@@ -41,7 +41,6 @@ param tags object = {
 }
 
 var acrName = toLower('${appName}acr${uniqueString(resourceGroup().id)}')
-var availabilityTestName = '${appName}-availability'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
   name: acrName
@@ -146,41 +145,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         minReplicas: minReplicas
         maxReplicas: maxReplicas
       }
-    }
-  }
-}
-
-resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
-  name: availabilityTestName
-  location: location
-  tags: union(tags, {
-    'hidden-link:${applicationInsights.id}': 'Resource'
-  })
-  kind: 'standard'
-  properties: {
-    Name: availabilityTestName
-    SyntheticMonitorId: availabilityTestName
-    Kind: 'standard'
-    Enabled: true
-    Frequency: 300
-    Timeout: 30
-    RetryEnabled: true
-    Locations: [
-      {
-        Id: 'us-va-ash-azr'
-      }
-    ]
-    Request: {
-      RequestUrl: 'https://${containerApp.properties.configuration.ingress.fqdn}/api/menu'
-      HttpVerb: 'GET'
-      FollowRedirects: true
-      ParseDependentRequests: false
-    }
-    ValidationRules: {
-      ExpectedHttpStatusCode: 200
-      IgnoreHttpStatusCode: false
-      SSLCheck: true
-      SSLCertRemainingLifetimeCheck: 7
     }
   }
 }

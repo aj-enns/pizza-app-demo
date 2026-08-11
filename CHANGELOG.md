@@ -47,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   liveness and readiness probes on `/api/menu`
 
 ### Fixed
+- Application Insights availability monitoring now deploys independently of
+  the Container App, app deployments ensure platform dependencies exist before
+  updating the application, and failed tests raise Azure Monitor alerts for
+  Azure SRE Agent incident response
 - Azure infrastructure and application deployments now serialize Container App
   changes and preserve the deployed image and ACR configuration during updates
 - Cart context tests now use the installed React Testing Library hooks API,
