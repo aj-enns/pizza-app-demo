@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shared logger instead of ad-hoc `console.*` calls
 - Performance metrics are now routed through the structured logger
 
+### Fixed
+- Cart context tests now use the installed React Testing Library hooks API,
+  allowing the complete Jest suite to run in CI
+
 ## [0.1.0] - 2025-01-01
 
 ### Added
