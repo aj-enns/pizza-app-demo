@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Application Insights request and dependency telemetry through Azure Monitor
+  OpenTelemetry, with the connection string managed as a Container App secret
+- External availability monitoring for `/api/menu` to detect ingress and
+  no-active-revision outages that cannot be observed inside the application
 - Guarded Container Apps revision deactivation script with exact-revision
   recovery and topology validation for SRE demonstrations
 - Guarded Azure Container Apps fault-injection script for SRE demonstrations,

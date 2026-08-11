@@ -46,6 +46,7 @@ var environmentName = '${appName}-env'
 var containerAppName = appName
 var logAnalyticsName = '${appName}-logs'
 var applicationInsightsName = '${appName}-insights'
+var availabilityTestName = '${appName}-availability'
 var placeholderImage = 'mcr.microsoft.com/k8se/quickstart:latest'
 var imageToDeploy = empty(containerImage) ? placeholderImage : containerImage
 
@@ -162,6 +163,41 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         minReplicas: minReplicas
         maxReplicas: maxReplicas
       }
+    }
+  }
+}
+
+resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
+  name: availabilityTestName
+  location: location
+  tags: union(tags, {
+    'hidden-link:${applicationInsights.id}': 'Resource'
+  })
+  kind: 'standard'
+  properties: {
+    Name: availabilityTestName
+    SyntheticMonitorId: availabilityTestName
+    Kind: 'standard'
+    Enabled: true
+    Frequency: 300
+    Timeout: 30
+    RetryEnabled: true
+    Locations: [
+      {
+        Id: 'us-va-ash-azr'
+      }
+    ]
+    Request: {
+      RequestUrl: 'https://${containerApp.properties.configuration.ingress.fqdn}/api/menu'
+      HttpVerb: 'GET'
+      FollowRedirects: true
+      ParseDependentRequests: false
+    }
+    ValidationRules: {
+      ExpectedHttpStatusCode: 200
+      IgnoreHttpStatusCode: false
+      SSLCheck: true
+      SSLCertRemainingLifetimeCheck: 7
     }
   }
 }
