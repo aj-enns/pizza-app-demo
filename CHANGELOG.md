@@ -36,14 +36,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Order API routes and the cart/checkout flows now emit structured logs via the
   shared logger instead of ad-hoc `console.*` calls
 - Performance metrics are now routed through the structured logger
-- Infrastructure Bicep is now the single owner of the Container App identity,
-  ACR registry configuration, and AcrPull role; the app workflow only builds,
-  pushes, and swaps the image, removing duplicated imperative CLI configuration
-- Container App now pulls images with a user-assigned managed identity and
-  defines liveness and readiness probes on `/api/menu`
-- Infrastructure deployments preserve the currently deployed image via an
-  `appExists` upsert parameter instead of round-tripping the image through the
-  workflow
+- Split deployment into a platform template (`infra/main.bicep`: registry,
+  environment, identity, logging, App Insights) and an application template
+  (`infra/app.bicep`: the container app and availability test), so the infra
+  and app workflows own disjoint resources
+- The app workflow now deploys the container app declaratively with its freshly
+  built image via `infra/app.bicep`, removing image-preservation logic and the
+  infra-versus-app deployment race
+- Container App pulls images with a user-assigned managed identity and defines
+  liveness and readiness probes on `/api/menu`
 
 ### Fixed
 - Azure infrastructure and application deployments now serialize Container App

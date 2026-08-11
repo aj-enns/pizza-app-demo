@@ -98,12 +98,15 @@ jobs:
           docker push "${{ steps.acr.outputs.server }}/$IMAGE_NAME:latest"
           echo "ref=$FULL_IMAGE" >> "$GITHUB_OUTPUT"
 
-      - name: Update Container App image
+      - name: Deploy Container App (Bicep)
         run: |
-          az containerapp update \
-            --name "$CONTAINER_APP_NAME" \
+          az deployment group create \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --image "${{ steps.image.outputs.ref }}" \
+            --name "pizzaapp-app-${{ github.run_id }}" \
+            --template-file infra/app.bicep \
+            --parameters infra/app.bicepparam \
+            --parameters containerImage="${{ steps.image.outputs.ref }}" \
+            --parameters appVersion="${{ steps.version.outputs.value }}" \
             --output none
 
       - name: Show app URL
