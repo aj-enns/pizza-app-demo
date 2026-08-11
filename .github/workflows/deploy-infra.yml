@@ -32,6 +32,7 @@ permissions:
 env:
   AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-pizza-app-demo' }}
   AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  CONTAINER_APP_NAME: ${{ vars.CONTAINER_APP_NAME || 'pizzaapp' }}
   BICEP_FILE: infra/main.bicep
   BICEP_PARAMS_FILE: infra/main.bicepparam
   DEPLOYMENT_NAME: pizza-app-${{ github.run_id }}
@@ -64,11 +65,20 @@ jobs:
         id: whatif
         run: |
           set -o pipefail
+          APP_VERSION=$(tr -d '\r\n' < VERSION)
+          if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" -o none 2>/dev/null; then
+            APP_EXISTS=true
+          else
+            APP_EXISTS=false
+          fi
+
           az deployment group what-if \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name "$DEPLOYMENT_NAME-whatif" \
             --template-file "$BICEP_FILE" \
             --parameters "$BICEP_PARAMS_FILE" \
+            --parameters "appVersion=$APP_VERSION" \
+            --parameters "appExists=$APP_EXISTS" \
             --result-format FullResourcePayloads | tee whatif.txt
 
       - name: Comment What-If on PR
@@ -91,6 +101,9 @@ jobs:
     needs: validate
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'deploy')
     runs-on: ubuntu-latest
+    concurrency:
+      group: pizzaapp-production
+      cancel-in-progress: false
     environment: production
     outputs:
       acrLoginServer: ${{ steps.deploy.outputs.acrLoginServer }}
@@ -121,24 +134,35 @@ jobs:
       - name: Deploy Bicep
         id: deploy
         run: |
+          if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" -o none 2>/dev/null; then
+            APP_EXISTS=true
+          else
+            APP_EXISTS=false
+          fi
+
           OUTPUTS=$(az deployment group create \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --name "$DEPLOYMENT_NAME" \
             --template-file "$BICEP_FILE" \
             --parameters "$BICEP_PARAMS_FILE" \
-            --parameters appVersion="${{ steps.version.outputs.value }}" \
+            --parameters "appVersion=${{ steps.version.outputs.value }}" \
+            --parameters "appExists=$APP_EXISTS" \
             --query properties.outputs \
             --output json)
           echo "$OUTPUTS"
-          echo "acrLoginServer=$(echo "$OUTPUTS" | jq -r '.acrLoginServer.value')" >> "$GITHUB_OUTPUT"
-          echo "acrName=$(echo "$OUTPUTS" | jq -r '.acrName.value')" >> "$GITHUB_OUTPUT"
-          echo "containerAppName=$(echo "$OUTPUTS" | jq -r '.containerAppName.value')" >> "$GITHUB_OUTPUT"
-          echo "containerAppFqdn=$(echo "$OUTPUTS" | jq -r '.containerAppFqdn.value')" >> "$GITHUB_OUTPUT"
+          {
+            echo "acrLoginServer=$(echo "$OUTPUTS" | jq -r '.acrLoginServer.value')"
+            echo "acrName=$(echo "$OUTPUTS" | jq -r '.acrName.value')"
+            echo "containerAppName=$(echo "$OUTPUTS" | jq -r '.containerAppName.value')"
+            echo "containerAppFqdn=$(echo "$OUTPUTS" | jq -r '.containerAppFqdn.value')"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Summary
         run: |
-          echo "### Infrastructure deployed" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Resource Group: \`$AZURE_RESOURCE_GROUP\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- ACR: \`${{ steps.deploy.outputs.acrLoginServer }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Container App: \`${{ steps.deploy.outputs.containerAppName }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- URL: https://${{ steps.deploy.outputs.containerAppFqdn }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Infrastructure deployed"
+            echo "- Resource Group: \`$AZURE_RESOURCE_GROUP\`"
+            echo "- ACR: \`${{ steps.deploy.outputs.acrLoginServer }}\`"
+            echo "- Container App: \`${{ steps.deploy.outputs.containerAppName }}\`"
+            echo "- URL: https://${{ steps.deploy.outputs.containerAppFqdn }}"
+          } >> "$GITHUB_STEP_SUMMARY"

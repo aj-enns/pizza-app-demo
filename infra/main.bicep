@@ -12,8 +12,11 @@ param appName string = 'pizzaapp'
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
 
-@description('Container image reference (e.g. myacr.azurecr.io/pizza-app:1.2.3). If empty, deploys a placeholder image and the CD workflow updates it.')
+@description('Container image reference (e.g. myacr.azurecr.io/pizza-app:1.2.3). If empty, the currently deployed image is preserved (or a placeholder on first deploy).')
 param containerImage string = ''
+
+@description('Set true when the container app already exists so its deployed image is preserved across infrastructure deployments.')
+param appExists bool = false
 
 @description('Application version (from VERSION file).')
 param appVersion string = '0.0.0'
@@ -48,7 +51,15 @@ var logAnalyticsName = '${appName}-logs'
 var applicationInsightsName = '${appName}-insights'
 var availabilityTestName = '${appName}-availability'
 var placeholderImage = 'mcr.microsoft.com/k8se/quickstart:latest'
-var imageToDeploy = empty(containerImage) ? placeholderImage : containerImage
+
+// Upsert: preserve the currently deployed image so infrastructure deployments never revert to the placeholder.
+resource existingContainerApp 'Microsoft.App/containerApps@2024-03-01' existing = if (appExists) {
+  name: containerAppName
+}
+
+var imageToDeploy = !empty(containerImage)
+  ? containerImage
+  : (existingContainerApp.?properties.template.containers[0].image ?? placeholderImage)
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
@@ -100,13 +111,25 @@ resource containerAppsEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${appName}-identity'
+  location: location
+  tags: tags
+}
+
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: containerAppName
   location: location
   tags: tags
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${uami.id}': {}
+    }
   }
+  dependsOn: [
+    acrPullAssignment
+  ]
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
@@ -123,10 +146,10 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         transport: 'auto'
         allowInsecure: false
       }
-      registries: empty(containerImage) ? [] : [
+      registries: [
         {
-          server: '${acrName}.azurecr.io'
-          identity: 'system'
+          server: acr.properties.loginServer
+          identity: uami.id
         }
       ]
     }
@@ -155,6 +178,27 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'OTEL_SERVICE_NAME'
               value: appName
+            }
+          ]
+          probes: [
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: '/api/menu'
+                port: 3000
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 30
+            }
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/api/menu'
+                port: 3000
+              }
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              failureThreshold: 3
             }
           ]
         }
@@ -202,14 +246,14 @@ resource availabilityTest 'Microsoft.Insights/webtests@2022-06-15' = {
   }
 }
 
-// Grant the Container App's managed identity AcrPull on the registry
+// Grant the Container App's user-assigned identity AcrPull on the registry
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
 resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, containerApp.id, acrPullRoleId)
+  name: guid(acr.id, uami.id, acrPullRoleId)
   scope: acr
   properties: {
-    principalId: containerApp.identity.principalId
+    principalId: uami.properties.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
   }

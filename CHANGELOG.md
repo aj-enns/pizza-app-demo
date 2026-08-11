@@ -36,8 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Order API routes and the cart/checkout flows now emit structured logs via the
   shared logger instead of ad-hoc `console.*` calls
 - Performance metrics are now routed through the structured logger
+- Infrastructure Bicep is now the single owner of the Container App identity,
+  ACR registry configuration, and AcrPull role; the app workflow only builds,
+  pushes, and swaps the image, removing duplicated imperative CLI configuration
+- Container App now pulls images with a user-assigned managed identity and
+  defines liveness and readiness probes on `/api/menu`
+- Infrastructure deployments preserve the currently deployed image via an
+  `appExists` upsert parameter instead of round-tripping the image through the
+  workflow
 
 ### Fixed
+- Azure infrastructure and application deployments now serialize Container App
+  changes and preserve the deployed image and ACR configuration during updates
 - Cart context tests now use the installed React Testing Library hooks API,
   allowing the complete Jest suite to run in CI
 
