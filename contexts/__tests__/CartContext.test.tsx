@@ -1,3 +1,91 @@
+import { renderHook, act } from '@testing-library/react-hooks';
+import { CartProvider, useCart } from '../CartContext';
+
+describe('Cart Context', () => {
+  it('should add a new item to cart', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+    });
+    expect(result.current.items).toHaveLength(1);
+  });
+
+  it('should remove an item from cart', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+      result.current.removeItem('margherita');
+    });
+    expect(result.current.items).toHaveLength(0);
+  });
+
+  it('should throw error when useCart is used outside CartProvider', () => {
+    const { result } = renderHook(() => useCart());
+    expect(() => result.current.addItem('margherita', 'medium', ['mozzarella'])).toThrow('useCart must be used within a CartProvider');
+  });
+
+  it('should handle adding duplicate items', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+    });
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].quantity).toBe(2);
+  });
+
+  it('should handle removing non-existent items', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.removeItem('non-existent');
+    });
+    expect(result.current.items).toHaveLength(0);
+  });
+});
+import { renderHook, act } from '@testing-library/react-hooks';
+import { CartProvider, useCart } from '../CartContext';
+
+describe('Cart Context', () => {
+  it('should add a new item to cart', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+    });
+    expect(result.current.items).toHaveLength(1);
+  });
+
+  it('should remove an item from cart', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+      result.current.removeItem('margherita');
+    });
+    expect(result.current.items).toHaveLength(0);
+  });
+
+  it('should throw error when useCart is used outside CartProvider', () => {
+    const { result } = renderHook(() => useCart());
+    expect(() => result.current.addItem('margherita', 'medium', ['mozzarella'])).toThrow('useCart must be used within a CartProvider');
+  });
+
+  it('should handle adding duplicate items', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+      result.current.addItem('margherita', 'medium', ['mozzarella']);
+    });
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].quantity).toBe(2);
+  });
+
+  it('should handle removing non-existent items', () => {
+    const { result } = renderHook(() => useCart(), { wrapper: CartProvider });
+    act(() => {
+      result.current.removeItem('non-existent');
+    });
+    expect(result.current.items).toHaveLength(0);
+  });
+});
 import { renderHook, act } from '@testing-library/react';
 import { CartProvider, useCart } from '../CartContext';
 import { PizzaSize } from '@/lib/types';

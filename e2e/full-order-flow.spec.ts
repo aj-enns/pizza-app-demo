@@ -1,5 +1,29 @@
 import { test, expect } from '@playwright/test';
 
+test.describe('Full Order Flow', () => {
+  test('should complete an order successfully', async ({ page }) => {
+    await page.goto('/menu');
+    await page.locator('text=Margherita').click();
+    await page.locator('text=Add to Cart').click();
+    await page.goto('/checkout');
+    await page.fill('input[name="name"]', 'John Doe');
+    await page.fill('input[name="address"]', '123 Pizza St');
+    await page.click('text=Place Order');
+    await expect(page.locator('text=Order Confirmation')).toBeVisible();
+  });
+
+  test('should show error on checkout failure', async ({ page }) => {
+    await page.goto('/menu');
+    await page.locator('text=Margherita').click();
+    await page.locator('text=Add to Cart').click();
+    await page.goto('/checkout');
+    await page.fill('input[name="name"]', ''); // Simulate empty name
+    await page.click('text=Place Order');
+    await expect(page.locator('text=Name is required')).toBeVisible();
+  });
+});
+import { test, expect } from '@playwright/test';
+
 function getPizzaCard(page: import('@playwright/test').Page, pizzaName: string) {
   return page.locator('.card').filter({
     has: page.getByRole('heading', { name: pizzaName, exact: true }),

@@ -57,7 +57,7 @@ Real-time SRE dashboard with:
 Three levels of documentation created:
 
 1. **README.md** - Updated with SRE section
-2. **docs/SRE-INSTRUMENTATION.md** - Comprehensive SRE guide
+2. **docs/SRdeE-INSTRUMENTATION.md** - Comprehensive SRE guide
 3. **Code comments** - Inline documentation throughout
 
 ## How to Use

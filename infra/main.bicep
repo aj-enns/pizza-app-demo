@@ -45,6 +45,7 @@ var acrName = toLower('${appName}acr${uniqueString(resourceGroup().id)}')
 var environmentName = '${appName}-env'
 var containerAppName = appName
 var logAnalyticsName = '${appName}-logs'
+var applicationInsightsName = '${appName}-insights'
 var placeholderImage = 'mcr.microsoft.com/k8se/quickstart:latest'
 var imageToDeploy = empty(containerImage) ? placeholderImage : containerImage
 
@@ -57,6 +58,17 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
       name: 'PerGB2018'
     }
     retentionInDays: 30
+  }
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
   }
 }
 
@@ -98,6 +110,12 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
       activeRevisionsMode: 'Single'
+      secrets: [
+        {
+          name: 'appinsights-connection-string'
+          value: applicationInsights.properties.ConnectionString
+        }
+      ]
       ingress: {
         external: true
         targetPort: 3000
@@ -128,6 +146,14 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'APP_VERSION'
               value: appVersion
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              secretRef: 'appinsights-connection-string'
+            }
+            {
+              name: 'OTEL_SERVICE_NAME'
+              value: appName
             }
           ]
         }

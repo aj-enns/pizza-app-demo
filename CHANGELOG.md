@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Guarded Container Apps revision deactivation script with exact-revision
+  recovery and topology validation for SRE demonstrations
+- Guarded Azure Container Apps fault-injection script for SRE demonstrations,
+  with saved-state recovery and dry-run support
 - Redesigned homepage hero call-to-action with a rating social-proof badge,
   trust signals (delivery time, free delivery, premium ingredients), and a
   secondary "Build Your Own" action
