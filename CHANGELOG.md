@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   response header for end-to-end tracing
 
 ### Changed
+- SRE fault-injection scripts now prefix terminal messages with both local and
+  UTC timestamps to make alert and investigation timelines easier to correlate
 - Rebranded the application from "PizzaHub" to "Oh Dough! Pizza Co." across the
   header, footer, page titles, changelog, and contact email
   (`info@ohdoughpizza.com`)

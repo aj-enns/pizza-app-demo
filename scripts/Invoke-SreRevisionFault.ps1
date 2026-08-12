@@ -27,6 +27,27 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Write-TimestampedHost {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+
+        [ConsoleColor]$ForegroundColor
+    )
+
+    $now = [DateTimeOffset]::Now
+    $timestamp = '[Local: {0} | UTC: {1}]' -f `
+        $now.ToString('yyyy-MM-dd HH:mm:ss zzz'),
+        $now.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'")
+
+    if ($PSBoundParameters.ContainsKey('ForegroundColor')) {
+        Write-Host "$timestamp $Message" -ForegroundColor $ForegroundColor
+        return
+    }
+
+    Write-Host "$timestamp $Message"
+}
+
 function Invoke-AzureCli {
     param(
         [Parameter(Mandatory)]
@@ -99,10 +120,10 @@ function Write-EndpointStatus {
     $endpoint = "https://$Fqdn/api/menu"
     try {
         $response = Invoke-WebRequest -Uri $endpoint -SkipHttpErrorCheck -TimeoutSec 15
-        Write-Host "Endpoint: $endpoint -> HTTP $($response.StatusCode)"
+        Write-TimestampedHost -Message "Endpoint: $endpoint -> HTTP $($response.StatusCode)"
     }
     catch {
-        Write-Host "Endpoint: $endpoint -> request failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-TimestampedHost -Message "Endpoint: $endpoint -> request failed: $($_.Exception.Message)" -ForegroundColor Yellow
     }
 }
 
@@ -138,10 +159,10 @@ if ($Mode -eq 'Inject') {
     } | ConvertTo-Json | Set-Content -Path $StatePath -Encoding utf8
 
     Set-RevisionState -RevisionName $revisionName -Action deactivate
-    Write-Host "Fault injected. Revision $revisionName was deactivated." -ForegroundColor Red
-    Write-Host "Recovery state was saved to $StatePath."
+    Write-TimestampedHost -Message "Fault injected. Revision $revisionName was deactivated." -ForegroundColor Red
+    Write-TimestampedHost -Message "Recovery state was saved to $StatePath."
     Write-EndpointStatus -Fqdn $appInfo.fqdn
-    Write-Host "Recover with: ./scripts/Invoke-SreRevisionFault.ps1 -Mode Recover"
+    Write-TimestampedHost -Message "Recover with: ./scripts/Invoke-SreRevisionFault.ps1 -Mode Recover"
     return
 }
 
@@ -165,5 +186,5 @@ if (-not $PSCmdlet.ShouldProcess("$AppName in $ResourceGroupName", $action)) {
 Set-RevisionState -RevisionName $revisionName -Action activate
 Remove-Item -Path $StatePath
 
-Write-Host "Recovery requested. Revision $revisionName was activated." -ForegroundColor Green
+Write-TimestampedHost -Message "Recovery requested. Revision $revisionName was activated." -ForegroundColor Green
 Write-EndpointStatus -Fqdn $appInfo.fqdn

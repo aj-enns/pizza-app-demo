@@ -33,6 +33,27 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Write-TimestampedHost {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+
+        [ConsoleColor]$ForegroundColor
+    )
+
+    $now = [DateTimeOffset]::Now
+    $timestamp = '[Local: {0} | UTC: {1}]' -f `
+        $now.ToString('yyyy-MM-dd HH:mm:ss zzz'),
+        $now.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'")
+
+    if ($PSBoundParameters.ContainsKey('ForegroundColor')) {
+        Write-Host "$timestamp $Message" -ForegroundColor $ForegroundColor
+        return
+    }
+
+    Write-Host "$timestamp $Message"
+}
+
 function Invoke-AzureCli {
     param(
         [Parameter(Mandatory)]
@@ -87,10 +108,10 @@ function Write-EndpointStatus {
     $endpoint = "https://$Fqdn/api/menu"
     try {
         $response = Invoke-WebRequest -Uri $endpoint -SkipHttpErrorCheck -TimeoutSec 15
-        Write-Host "Endpoint: $endpoint -> HTTP $($response.StatusCode)"
+        Write-TimestampedHost -Message "Endpoint: $endpoint -> HTTP $($response.StatusCode)"
     }
     catch {
-        Write-Host "Endpoint: $endpoint -> request failed: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-TimestampedHost -Message "Endpoint: $endpoint -> request failed: $($_.Exception.Message)" -ForegroundColor Yellow
     }
 }
 
@@ -107,7 +128,7 @@ if ($Mode -eq 'Inject') {
     }
 
     if ($currentPort -eq $FaultPort) {
-        Write-Host "Fault is already active: target port is $FaultPort." -ForegroundColor Yellow
+        Write-TimestampedHost -Message "Fault is already active: target port is $FaultPort." -ForegroundColor Yellow
         Write-EndpointStatus -Fqdn $appInfo.fqdn
         return
     }
@@ -127,9 +148,9 @@ if ($Mode -eq 'Inject') {
     } | ConvertTo-Json | Set-Content -Path $StatePath -Encoding utf8
 
     Set-IngressTargetPort -TargetPort $FaultPort
-    Write-Host "Fault injected. Original port $currentPort was saved to $StatePath." -ForegroundColor Red
+    Write-TimestampedHost -Message "Fault injected. Original port $currentPort was saved to $StatePath." -ForegroundColor Red
     Write-EndpointStatus -Fqdn $appInfo.fqdn
-    Write-Host "Recover with: ./scripts/Invoke-SrePortFault.ps1 -Mode Recover"
+    Write-TimestampedHost -Message "Recover with: ./scripts/Invoke-SrePortFault.ps1 -Mode Recover"
     return
 }
 
@@ -145,11 +166,11 @@ if (Test-Path $StatePath) {
     $restorePort = [int]$state.originalPort
 }
 else {
-    Write-Host "No saved state found. Falling back to HealthyPort $HealthyPort." -ForegroundColor Yellow
+    Write-TimestampedHost -Message "No saved state found. Falling back to HealthyPort $HealthyPort." -ForegroundColor Yellow
 }
 
 if ($currentPort -eq $restorePort) {
-    Write-Host "App is already configured for target port $restorePort." -ForegroundColor Green
+    Write-TimestampedHost -Message "App is already configured for target port $restorePort." -ForegroundColor Green
     if (Test-Path $StatePath) {
         Remove-Item -Path $StatePath
     }
@@ -167,5 +188,5 @@ if (Test-Path $StatePath) {
     Remove-Item -Path $StatePath
 }
 
-Write-Host "Recovery requested. Target port restored to $restorePort." -ForegroundColor Green
+Write-TimestampedHost -Message "Recovery requested. Target port restored to $restorePort." -ForegroundColor Green
 Write-EndpointStatus -Fqdn $appInfo.fqdn
