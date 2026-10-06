@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PizzaCard from '../PizzaCard';
 import { CartProvider } from '@/contexts/CartContext';
@@ -100,14 +100,31 @@ describe('PizzaCard', () => {
     expect(image).toBeInTheDocument();
   });
 
-  it('should disable button while adding', async () => {
+  it('should keep the button enabled while showing confirmation', async () => {
     const user = userEvent.setup();
     renderWithCart(<PizzaCard pizza={mockPizza} />);
     
     const addButton = screen.getByRole('button', { name: /add to cart/i });
     await user.click(addButton);
     
-    expect(addButton).toBeDisabled();
+    expect(addButton).toBeEnabled();
+    expect(addButton).toHaveTextContent('Added!');
+  });
+
+  it('should restore the add label after the confirmation period', () => {
+    jest.useFakeTimers();
+    renderWithCart(<PizzaCard pizza={mockPizza} />);
+
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    fireEvent.click(addButton);
+    expect(addButton).toHaveTextContent('Added!');
+
+    act(() => {
+      jest.advanceTimersByTime(600);
+    });
+
+    expect(addButton).toHaveTextContent('Add to Cart');
+    jest.useRealTimers();
   });
 
   describe('Cheese Selection', () => {

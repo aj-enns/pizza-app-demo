@@ -53,4 +53,29 @@ describe('Application Insights instrumentation', () => {
 
     expect(mockUseAzureMonitor).not.toHaveBeenCalled();
   });
+
+  it('does not initialize Azure Monitor with an empty connection string', async () => {
+    process.env.APPLICATIONINSIGHTS_CONNECTION_STRING = '';
+
+    await register();
+
+    expect(mockUseAzureMonitor).not.toHaveBeenCalled();
+  });
+
+  it('does not initialize Azure Monitor without a runtime', async () => {
+    delete process.env.NEXT_RUNTIME;
+
+    await register();
+
+    expect(mockUseAzureMonitor).not.toHaveBeenCalled();
+  });
+
+  it('propagates Azure Monitor initialization errors', async () => {
+    const error = new Error('Azure Monitor initialization failed');
+    mockUseAzureMonitor.mockImplementationOnce(() => {
+      throw error;
+    });
+
+    await expect(register()).rejects.toThrow(error);
+  });
 });

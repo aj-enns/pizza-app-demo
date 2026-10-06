@@ -2,7 +2,16 @@ import { render, screen } from '@testing-library/react';
 import CartPage from '../page';
 import { CartProvider } from '@/contexts/CartContext';
 
-// Mock CartItem and CartSummary components
+/**
+ * Verifies the cart page's empty-state content and layout.
+ *
+ * The shared Jest setup provides an empty localStorage mock, so each render
+ * starts with no cart items. Assertions for populated-cart controls therefore
+ * verify that those controls remain hidden in the empty state.
+ *
+ * CartItem and CartSummary are mocked to keep this suite focused on the page's
+ * conditional rendering rather than behavior owned by child components.
+ */
 jest.mock('@/components/CartItem', () => {
   return function MockCartItem({ item }: any) {
     return <div data-testid="cart-item">{item.pizzaName}</div>;
@@ -15,9 +24,11 @@ jest.mock('@/components/CartSummary', () => {
   };
 });
 
+/** Renders the page with the same cart context provided by the root layout. */
 const renderWithCart = (ui: React.ReactElement) => {
   return render(<CartProvider>{ui}</CartProvider>);
 };
+
 
 describe('Cart Page', () => {
   describe('Empty Cart', () => {
@@ -40,7 +51,7 @@ describe('Cart Page', () => {
 
     it('should render shopping bag icon when cart is empty', () => {
       const { container } = renderWithCart(<CartPage />);
-      // Lucide icons render as SVGs
+      // Lucide renders the decorative shopping bag as an inline SVG.
       const icon = container.querySelector('svg');
       expect(icon).toBeInTheDocument();
     });
@@ -49,13 +60,11 @@ describe('Cart Page', () => {
   describe('With Items', () => {
     it('should render page heading with item count', () => {
       renderWithCart(<CartPage />);
-      // With empty cart, this won't appear, but we test the structure
       expect(screen.queryByText(/Your Cart \(/)).not.toBeInTheDocument();
     });
 
     it('should have links to checkout and continue shopping', () => {
       renderWithCart(<CartPage />);
-      // These won't be visible with empty cart
       const checkoutLink = screen.queryByRole('link', { name: /proceed to checkout/i });
       const continueLink = screen.queryByRole('link', { name: /continue shopping/i });
       
@@ -73,9 +82,7 @@ describe('Cart Page', () => {
 
     it('should be responsive', () => {
       const { container } = renderWithCart(<CartPage />);
-      // Check for responsive classes
       const element = container.querySelector('.lg\\:col-span-2');
-      // Will be null when cart is empty, which is expected
       expect(element).toBeNull();
     });
   });

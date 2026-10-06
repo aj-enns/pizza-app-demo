@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+} from 'react';
 import { CartItem, PizzaSize, ToppingWithPlacement } from '@/lib/types';
 import { calculateCartTotals, calculateItemPrice, calculateCustomItemPrice, getPizzaById } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -50,6 +57,11 @@ interface CartContextType extends CartState {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'pizza-cart';
+const STORAGE_WRITE_TIMEOUT = 500;
+
+function getToppingSelectionKey(toppings: string[]): string {
+  return [...toppings].sort().join('\0');
+}
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -72,11 +84,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       );
       
       // Check if identical item exists
+      const selectedToppingsKey = getToppingSelectionKey(selectedToppings);
       const existingItemIndex = state.items.findIndex(
         item =>
           item.pizzaId === pizzaId &&
           item.size === size &&
-          JSON.stringify(item.selectedToppings.sort()) === JSON.stringify(selectedToppings.sort())
+          getToppingSelectionKey(item.selectedToppings) === selectedToppingsKey
       );
       
       let newItems: CartItem[];
@@ -249,14 +262,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+    const saveCart = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+      } catch (error) {
+        logger.error('Failed to save cart to localStorage', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    };
+    const handlePageHide = () => saveCart();
+
+    window.addEventListener('pagehide', handlePageHide, { once: true });
+
+    if ('requestIdleCallback' in window) {
+      const idleCallbackId = window.requestIdleCallback(saveCart, {
+        timeout: STORAGE_WRITE_TIMEOUT,
+      });
+      return () => {
+        window.cancelIdleCallback(idleCallbackId);
+        window.removeEventListener('pagehide', handlePageHide);
+      };
+    }
+
+    const timeoutId = setTimeout(saveCart, 0);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
   }, [state.items]);
   
-  const addItem = (pizzaId: string, size: PizzaSize, selectedToppings: string[]) => {
+  const addItem = useCallback((pizzaId: string, size: PizzaSize, selectedToppings: string[]) => {
     dispatch({ type: 'ADD_ITEM', payload: { pizzaId, size, selectedToppings } });
-  };
+  }, []);
   
-  const addCustomItem = (
+  const addCustomItem = useCallback((
     pizzaId: string,
     pizzaName: string,
     size: PizzaSize,
@@ -268,31 +308,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       type: 'ADD_CUSTOM_ITEM', 
       payload: { pizzaId, pizzaName, size, customToppings, customCrust, customSauce } 
     });
-  };
+  }, []);
   
-  const removeItem = (id: string) => {
+  const removeItem = useCallback((id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: id });
-  };
+  }, []);
   
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
-  };
+  }, []);
   
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      ...state,
+      addItem,
+      addCustomItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+    }),
+    [state, addItem, addCustomItem, removeItem, updateQuantity, clearCart]
+  );
   
   return (
-    <CartContext.Provider
-      value={{
-        ...state,
-        addItem,
-        addCustomItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

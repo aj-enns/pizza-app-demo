@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { CartProvider, useCart } from '../CartContext';
 import { PizzaSize } from '@/lib/types';
 
@@ -89,13 +89,31 @@ describe('CartContext', () => {
       expect(result.current.total).toBeGreaterThan(0);
     });
 
-    it('should save to localStorage when item is added', () => {
+    it('should save to localStorage when item is added', async () => {
       const { result } = renderHook(() => useCart(), { wrapper });
       
       act(() => {
         result.current.addItem('margherita', 'medium', ['mozzarella']);
       });
       
+      await waitFor(() => {
+        const saved = localStorage.getItem('pizza-cart');
+        expect(saved).toBeTruthy();
+        const items = JSON.parse(saved!);
+        expect(items).toHaveLength(1);
+      });
+    });
+
+    it('should save the latest cart before the page is unloaded', () => {
+      const { result } = renderHook(() => useCart(), { wrapper });
+
+      act(() => {
+        result.current.addItem('margherita', 'medium', ['mozzarella']);
+      });
+      act(() => {
+        window.dispatchEvent(new Event('pagehide'));
+      });
+
       const saved = localStorage.getItem('pizza-cart');
       expect(saved).toBeTruthy();
       const items = JSON.parse(saved!);
@@ -140,7 +158,7 @@ describe('CartContext', () => {
       expect(result.current.total).toBe(0);
     });
 
-    it('should update localStorage after removing item', () => {
+    it('should update localStorage after removing item', async () => {
       const { result } = renderHook(() => useCart(), { wrapper });
       
       act(() => {
@@ -153,10 +171,12 @@ describe('CartContext', () => {
         result.current.removeItem(itemId);
       });
       
-      const saved = localStorage.getItem('pizza-cart');
-      expect(saved).toBeTruthy();
-      const items = JSON.parse(saved!);
-      expect(items).toHaveLength(0);
+      await waitFor(() => {
+        const saved = localStorage.getItem('pizza-cart');
+        expect(saved).toBeTruthy();
+        const items = JSON.parse(saved!);
+        expect(items).toHaveLength(0);
+      });
     });
   });
 
@@ -264,7 +284,7 @@ describe('CartContext', () => {
       expect(result.current.total).toBe(0);
     });
 
-    it('should clear localStorage', () => {
+    it('should clear localStorage', async () => {
       const { result } = renderHook(() => useCart(), { wrapper });
       
       act(() => {
@@ -275,10 +295,12 @@ describe('CartContext', () => {
         result.current.clearCart();
       });
       
-      const saved = localStorage.getItem('pizza-cart');
-      expect(saved).toBeTruthy();
-      const items = JSON.parse(saved!);
-      expect(items).toHaveLength(0);
+      await waitFor(() => {
+        const saved = localStorage.getItem('pizza-cart');
+        expect(saved).toBeTruthy();
+        const items = JSON.parse(saved!);
+        expect(items).toHaveLength(0);
+      });
     });
   });
 

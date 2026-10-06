@@ -12,6 +12,7 @@ function readVersion() {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  serverExternalPackages: ['@azure/monitor-opentelemetry'],
   eslint: {
     ignoreDuringBuilds: process.env.NEXT_LINT_DURING_BUILD === '0',
   },

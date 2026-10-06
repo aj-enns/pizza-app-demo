@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Pizza, PizzaSize } from '@/lib/types';
@@ -12,10 +12,21 @@ interface PizzaCardProps {
   pizza: Pizza;
 }
 
+const ADDED_FEEDBACK_DURATION = 600;
+
 export default function PizzaCard({ pizza }: PizzaCardProps) {
   const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState<PizzaSize>('medium');
   const [isAdding, setIsAdding] = useState(false);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Cheese options
   const cheeseOptions = useMemo(
@@ -55,9 +66,13 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
     setIsAdding(true);
     addItem(pizza.id, selectedSize, currentToppings);
 
-    setTimeout(() => {
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+    feedbackTimeoutRef.current = setTimeout(() => {
       setIsAdding(false);
-    }, 1000);
+      feedbackTimeoutRef.current = null;
+    }, ADDED_FEEDBACK_DURATION);
   };
 
   return (
@@ -141,7 +156,7 @@ export default function PizzaCard({ pizza }: PizzaCardProps) {
         <div className="space-y-2">
           <button
             onClick={handleAddToCart}
-            disabled={isAdding}
+            aria-live="polite"
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             {isAdding ? (

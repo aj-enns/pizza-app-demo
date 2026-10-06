@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   response header for end-to-end tracing
 
 ### Changed
+- Adding a pizza now provides immediate, non-blocking confirmation while cart
+  persistence is deferred to keep the menu responsive
 - SRE fault-injection scripts now prefix terminal messages with both local and
   UTC timestamps to make alert and investigation timelines easier to correlate
 - Rebranded the application from "PizzaHub" to "Oh Dough! Pizza Co." across the
@@ -49,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   liveness and readiness probes on `/api/menu`
 
 ### Fixed
+- Application startup no longer fails with a missing `stream` module when
+  Next.js compiles telemetry instrumentation for the Edge runtime
 - Application Insights availability monitoring now deploys independently of
   the Container App, app deployments ensure platform dependencies exist before
   updating the application, and failed tests raise Azure Monitor alerts for

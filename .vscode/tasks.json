@@ -12,7 +12,7 @@
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": ".*▲ Next\\.js.*",
-					"endsPattern": ".*Local:.*http://localhost:3000.*"
+					"endsPattern": ".*Local:.*http://localhost:3001.*"
 				}
 			},
 			"presentation": {
@@ -47,7 +47,7 @@
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": ".*",
-					"endsPattern": ".*Local:.*http://localhost:3000.*"
+					"endsPattern": ".*Local:.*http://localhost:3001.*"
 				}
 			}
 		},

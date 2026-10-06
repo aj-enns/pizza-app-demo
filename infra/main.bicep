@@ -16,7 +16,7 @@ param location string = resourceGroup().location
 @description('Tags applied to all resources.')
 param tags object = {
   app: 'pizza-app'
-  managedBy: 'bicep'
+  managedBy: 'bicep' 
 }
 
 // Derived names
@@ -26,6 +26,7 @@ var logAnalyticsName = '${appName}-logs'
 var applicationInsightsName = '${appName}-insights'
 var availabilityTestName = '${appName}-availability'
 var availabilityAlertName = '${appName}-availability-alert'
+
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
