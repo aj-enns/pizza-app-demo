@@ -1,5 +1,6 @@
 import {
   getPizzas,
+  getMenuPizzas,
   getPizzaById,
   getToppings,
   getToppingById,
@@ -29,6 +30,17 @@ describe('utils', () => {
       expect(pizza).toHaveProperty('name');
       expect(pizza).toHaveProperty('basePrice');
       expect(pizza).toHaveProperty('sizes');
+    });
+  });
+
+  describe('getMenuPizzas', () => {
+    it('should exclude build-your-own pizzas while keeping regular menu pizzas', () => {
+      const pizzas = getPizzas();
+      const menuPizzas = getMenuPizzas();
+
+      expect(pizzas.some(pizza => pizza.category === 'custom')).toBe(true);
+      expect(menuPizzas.every(pizza => pizza.category !== 'custom')).toBe(true);
+      expect(menuPizzas.length).toBeGreaterThan(0);
     });
   });
 
